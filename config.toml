@@ -1,0 +1,5 @@
+[projects."/Users/prb/Sablier/indexers"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/.codex"]
+  trust_level = "trusted"

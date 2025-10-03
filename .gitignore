@@ -1,0 +1,8 @@
+# misc directories
+log/
+sessions/
+
+# misc files
+auth.json
+history.jsonl
+version.json
