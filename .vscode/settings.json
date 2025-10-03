@@ -1,0 +1,8 @@
+{
+  "[json][jsonc][md][yaml][yml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
+  }
+}
