@@ -3,3 +3,6 @@
 
 [projects."/Users/prb/.codex"]
   trust_level = "trusted"
+
+[projects."/Users/prb/Sablier/ui/interfaces"]
+  trust_level = "trusted"
