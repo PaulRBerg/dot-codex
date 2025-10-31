@@ -1,3 +1,19 @@
+[mcp_servers.context7]
+  args = ["-y", "@upstash/context7-mcp"]
+  command = "npx"
+
+[mcp_servers.playwright]
+  args = ["@playwright/mcp@latest"]
+  command = "npx"
+
+[mcp_servers.serena]
+  args = ["--context", "--from", "codex", "git+https://github.com/oraios/serena", "serena", "start-mcp-server"]
+  command = "uvx"
+
+[mcp_servers.sequential-thinking]
+  args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+  command = "npx"
+
 [projects."/Users/prb/Sablier/indexers"]
   trust_level = "trusted"
 
