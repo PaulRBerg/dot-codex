@@ -13,7 +13,10 @@ from pathlib import Path
 import re
 from typing import Tuple
 
-REF_PATTERN = re.compile(r"^(?P<indent>\s*)@(?P<path>[^\s]+)\s*$", re.MULTILINE)
+REF_PATTERN = re.compile(
+    r"^(?P<indent>[ \t]*)@(?P<path>\S+)[ \t]*(?:\r\n|\r|\n|$)",
+    re.MULTILINE,
+)
 
 
 def flatten_file(path: Path, ancestors: Tuple[Path, ...] = ()) -> str:
@@ -33,8 +36,19 @@ def flatten_file(path: Path, ancestors: Tuple[Path, ...] = ()) -> str:
         target_token = match.group("path")
         target_path = (resolved.parent / target_token).resolve()
         flattened_text = flatten_file(target_path, ancestors + (resolved,))
+        newline_consumed = match.group(0).endswith(("\r\n", "\n", "\r"))
+
         # Preserve indentation context for inlined blocks.
-        return textwrap.indent(flattened_text, indent) if indent else flattened_text
+        flattened_text = (
+            textwrap.indent(flattened_text, indent) if indent else flattened_text
+        )
+
+        if newline_consumed and not flattened_text.endswith(("\n", "\r")):
+            # Re-introduce the newline we consumed from the placeholder line so
+            # subsequent content stays on its own line.
+            flattened_text += "\n"
+
+        return flattened_text
 
     return REF_PATTERN.sub(_replace, raw_content)
 
