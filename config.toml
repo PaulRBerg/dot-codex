@@ -2,6 +2,10 @@
   args = ["-y", "@upstash/context7-mcp"]
   command = "npx"
 
+[mcp_servers.playwright]
+  args = ["@playwright/mcp@latest"]
+  command = "npx"
+
 [mcp_servers.next-devtools]
   args = ["next-devtools-mcp@latest"]
   command = "npx"
