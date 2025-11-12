@@ -3,8 +3,9 @@
   command = "npx"
 
 [mcp_servers.playwright]
-  args = ["@playwright/mcp@latest"]
+  args = ["@playwright/mcp@latest", "--extension"]
   command = "npx"
+  env = { PLAYWRIGHT_MCP_EXTENSION_TOKEN = "K_oz-KHGYUWYSS9Ps_QsOcmOmtX-qhrH0fWxC2CjdFA" }
 
 [mcp_servers.next-devtools]
   args = ["next-devtools-mcp@latest"]
@@ -13,12 +14,3 @@
 [mcp_servers.sequential-thinking]
   args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
   command = "npx"
-
-[projects."/Users/prb/Sablier/indexers"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/.codex"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/Sablier/ui/interfaces"]
-  trust_level = "trusted"

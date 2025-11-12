@@ -16,5 +16,5 @@ python3 := require("python3")
 # ---------------------------------------------------------------------------- #
 
 # Run the flatten script; accepts a `files` arg mirroring flatten.py.
-flatten files="AGENTS_symlink.md" *args:
+@flatten files="AGENTS_symlink.md" *args:
     python3 flatten.py {{ files }} {{ args }}
