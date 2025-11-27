@@ -1,20 +1,22 @@
-model = "gpt-5.1-codex"
+model = "gpt-5.1-codex-max"
+
 [mcp_servers.context7]
   args = ["-y", "@upstash/context7-mcp"]
   command = "npx"
 
-[mcp_servers.playwright]
-  args = ["@playwright/mcp@latest", "--extension"]
-  command = "npx"
-  env = { PLAYWRIGHT_MCP_EXTENSION_TOKEN = "K_oz-KHGYUWYSS9Ps_QsOcmOmtX-qhrH0fWxC2CjdFA" }
+  # [mcp_servers.playwright]
+  #   args = ["@playwright/mcp@latest", "--extension"]
+  #   command = "npx"
+  #   env_vars = ["PLAYWRIGHT_MCP_EXTENSION_TOKEN"]
 
-[mcp_servers.next-devtools]
-  args = ["next-devtools-mcp@latest"]
-  command = "npx"
+  # [mcp_servers.next-devtools]
+  #   args = ["next-devtools-mcp@latest"]
+  #   command = "npx"
 
 [mcp_servers.sequential-thinking]
   args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
   command = "npx"
 
 [notice]
+  "hide_gpt-5.1-codex-max_migration_prompt" = true
   hide_gpt5_1_migration_prompt = true
