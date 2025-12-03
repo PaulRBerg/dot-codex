@@ -33,23 +33,13 @@ bat src/\(shared\)/Foo.tsx
 rg "pattern" path/to/my\ file.txt
 ```
 
-## Planning
+## Testing
 
-For complex coding tasks, act as an orchestrator for multiple AI agents.
+Run tests with `uv`:
 
-Plan an execution sequence, then delegate via `Task` tool using appropriate subagents - do not implement yourself.
-
-### Orchestration Rules
-
-- **Parallel**: No dependencies → multiple `Task` calls in one message
-- **Sequential**: Dependencies → single subagent for full chain
-- **Hybrid**: Resolve prerequisites, then parallelize
-
-## Anti-patterns
-
-- ❌ Write code instead of delegating
-- ❌ Spawn dependent tasks one at a time
-- ❌ Skip review of subagent outputs
+```bash
+uv run pytest path/to/test.py -v
+```
 
 ## Copyable Markdown
 
