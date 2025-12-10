@@ -1,0 +1,21 @@
+# See:
+#   - https://developers.openai.com/codex/local-config#cli
+#   - https://github.com/openai/codex/blob/main/docs/config.md
+check_for_update_on_startup = true
+file_opener = "cursor"
+model = "gpt-5.1-codex-max"
+model_reasoning_effort = "xhigh"
+notify = [
+  "bash",
+  "-lc",
+  "osascript -e 'display notification \"Task finished\" with title \"Codex\"'; afplay /System/Library/Sounds/Glass.aiff",
+]
+
+[features]
+  ghost_commit = true
+  web_search_request = true
+
+[shell_environment_policy]
+  experimental_use_profile = true
+  ignore_default_excludes = true
+  inherit = "all"
