@@ -10,15 +10,17 @@ set unstable
 
 python3 := require("python3")
 
-
 # ---------------------------------------------------------------------------- #
 #                                   COMMANDS                                   #
 # ---------------------------------------------------------------------------- #
 
-# Run the flatten script; accepts a `files` arg mirroring flatten.py.
+default:
+    just build
+
+# Run the flatten script; accepts a `files` arg mirroring flatten.py
+[private]
 @flatten files="AGENTS_symlink.md" *args:
     python3 flatten.py {{ files }} {{ args }}
-alias f := flatten
 
 # Build AGENTS.md by flattening and appending extra context.
 @build:
