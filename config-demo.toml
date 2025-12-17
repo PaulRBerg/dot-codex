@@ -13,6 +13,7 @@ notify = [
 
 [features]
   ghost_commit = true
+  skills = true
   web_search_request = true
 
 [shell_environment_policy]
