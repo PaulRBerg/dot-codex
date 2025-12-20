@@ -1,90 +1,144 @@
 ---
-description: Create an atomic git commit with smart heuristic analysis
-argument-hint: '[FILES=<paths>] [PR_TITLE="<title>"]'
+argument-hint: '[--all] [--deep] [--push] [--stack]'
+description: Create atomic git commits with smart heuristic analysis
 ---
 
-You are in a git repo. Create a high-quality, mostly-atomic commit.
+## Context
 
-## Context (collect first)
+Collect and include:
 
-Run and include the output of:
+- Current branch: `git branch --show-current`
+- Git status: `git status --short --branch`
+- Staged diff: `git diff --cached`
+- Unstaged diff: `git diff`
+- Arguments: $ARGUMENTS
 
-- `git branch --show-current`
-- `git status --short --branch`
-- `git diff --cached`
-- `git diff`
+## Task
 
-Also echo the prompt args so they appear in the transcript:
+### STEP 1: Handle staging
 
-- `echo "ARGS=$ARGUMENTS"`
-- `echo "FILES=$FILES"`
-- `echo "PR_TITLE=$PR_TITLE"`
+IF `--all`:
 
-## Staging rules
+- No changes at all → error "No changes to commit"
+- Unstaged changes exist → auto-stage with `git add -A`, log what was staged
+- Already staged → proceed
 
-1) If `$FILES` is set:
-   - Stage **exactly** those paths (space-separated list is fine).
-   - Fail if any path does not exist.
-   - Do not stage unrelated files.
+OTHERWISE (default - atomic commits):
 
-2) Else if `$ARGUMENTS` contains `--all`:
-   - Stage everything with `git add -A`.
-   - If there are no changes to commit, stop with a clear error.
+- Unstage all (`git reset`)
+- Stage only files modified in this Codex session
+- Log which files were staged
+- If no Codex-session files → error "No files modified in this Codex session"
 
-3) Else (default: atomic-by-session):
-   - If there are already-staged changes that are not clearly from this Codex session, ask before modifying the index.
-   - Unstage everything (`git reset`), then stage only the files modified in *this Codex session*.
-   - If no files were modified in this session, stop with a clear error.
+### STEP 2: Parse arguments
 
-Log what was staged.
+Flags:
 
-## Message rules
+- `--all` → commit all changes (not just Codex-session files)
+- `--deep` → deep code analysis, breaking changes, detailed body
+- `--push` → push after commit
+- `--stack` → use `gt create` instead of `git commit`
+- Type keywords (`feat`, `fix`, `docs`) → use that type
+- Quoted text → use as description
 
-Prefer Conventional Commits:
+### STEP 3: Analyze changes
 
-- Subject line (≤50 chars): `type(scope): description` or `type: description`
-- Imperative mood ("add" not "added"), lowercase, no trailing period
+**Default mode:**
+
+- Read the staged diff from context
+- If there is no staged diff but the repo is dirty, use the unstaged diff/status
+- Determine change type from what the code does:
+  - New functionality → `feat`
+  - Bug fix or error handling → `fix`
+  - Code reorganization without behavior change → `refactor`
+  - Documentation changes → `docs`
+  - Test additions/changes → `test`
+  - Build/CI changes → `ci`
+  - Dependencies → `chore(deps)`
+  - AI config (CLAUDE.md, AGENTS.md, .claude/, .gemini/, .codex/) → `ai`
+- Infer scope only when path makes it obvious:
+  - `src/auth/*` → `auth`
+  - `components/Button/*` → `Button`
+  - Multiple areas or unclear path → omit scope
+- Extract a specific description of what changed (not just which files)
+
+**IF `--deep`:**
+
+- Deep semantic analysis of the code
+- Detect breaking changes
+- Infer scope from code structure even when path isn't clear
+- Add detailed body explaining why the change was made
+- Check for GitHub issues in chat transcript
+
+**Conventional types:** feat, fix, docs, style, refactor, test, chore, ci, perf, revert, ai
+
+### STEP 4: Compose message
+
+Subject line (≤50 chars): `type(scope): description` or `type: description`
+
+- Imperative mood ("add" not "added")
+- Lowercase, no period
 - Describe what the change does, not which files changed
 
-Determine `type` from the staged diff:
+**Default mode:** Subject only. Brief but specific.
 
-- New functionality → `feat`
-- Bug fix / error handling → `fix`
-- Reorganization without behavior change → `refactor`
-- Docs-only → `docs`
-- Tests → `test`
-- Build/CI → `ci`
-- Dependencies → `chore(deps)`
-- AI config (CLAUDE.md, AGENTS.md, `.claude/`, `.gemini/`, `.codex/`) → `ai`
+**IF `--deep`:**
 
-Infer `scope` only when it’s obvious; otherwise omit it.
+- Add body (wrap 72 chars, explain WHY)
+- Breaking change: `BREAKING CHANGE: description` + migration notes
+- GitHub issues: `Closes #123` or `Closes #123, #456`
 
-If `$PR_TITLE` is set:
+### STEP 5: Commit
 
-- If it already matches Conventional Commits, use it as-is.
-- Otherwise, treat it as the **description** to pair with the inferred `type(scope): ...`.
+**IF `--stack`:** use `gt create -m "subject" -m "body"`
+**ELSE:** use `git commit -m "subject" -m "body"`
 
-If `$ARGUMENTS` contains `--deep`:
+Output: hash + subject + brief summary
 
-- Do deeper semantic analysis, detect breaking changes, and include a wrapped (72 cols) body explaining **why**.
-- If breaking: add `BREAKING CHANGE: ...` + migration notes.
-- If you find issue references in the transcript, add `Closes #...`.
+If failed: show error + suggest fix
 
-## Commit
+### STEP 6: Push (if --push)
 
-- If `$ARGUMENTS` contains `--stack`: use `gt create -m "subject" -m "body"`.
-- Else: use `git commit -m "subject"` (and add `-m "body"` only when a body is present).
+**IF `--push` + `--stack`:** run `gt stack submit`
+**ELSE IF `--push`:** run `git push origin`
 
-Output:
+If failed: show error + suggest fix (pull first, set upstream, auth)
 
-- Commit hash + subject
-- 2–3 bullets summarizing the key behavior-level changes
+## Examples
 
-## Push (optional)
+**Subject lines:**
 
-If `$ARGUMENTS` contains `--push`:
+```
+feat(auth): add OAuth2 login support
+fix(api): handle null response from user endpoint
+refactor: extract validation logic into shared module
+docs: clarify installation requirements
+chore(deps): bump lodash to 4.17.21
+ai: add code review agent configuration
+```
 
-- If also `--stack`: run `gt stack submit`
-- Else: run `git push origin`
+**With body (thorough mode):**
 
-On failure, show the error and the most likely fix (pull/rebase, set upstream, auth).
+```
+feat(webhooks): add retry mechanism for failed deliveries
+
+Implements exponential backoff with max 5 retries. Retry intervals:
+1m, 5m, 15m, 1h, 6h.
+```
+
+**Breaking change:**
+
+```
+feat(api): migrate to v2 authentication
+
+BREAKING CHANGE: clients must use JWT. Session cookies removed.
+See docs/auth-v2.md for migration.
+```
+
+**With issue:**
+
+```
+fix(auth): resolve login timeout on slow connections
+
+Closes #234
+```

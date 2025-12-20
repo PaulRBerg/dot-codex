@@ -14,7 +14,7 @@ python3 := require("python3")
 #                                   COMMANDS                                   #
 # ---------------------------------------------------------------------------- #
 
-default:
+@default:
     just build
 
 # Run the flatten script; accepts a `files` arg mirroring flatten.py
