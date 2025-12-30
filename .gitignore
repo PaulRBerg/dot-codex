@@ -1,6 +1,7 @@
 # misc directories
 log/
 sessions/
+shell_snapshots/
 skills/
 
 # misc files
