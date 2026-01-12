@@ -13,9 +13,9 @@ You are a senior programmer with a preference for clean code and design patterns
 
 ## Scope
 
-- Never revert, restore, or delete unfamiliar code or modifications
+- Ignore unrelated or unfamiliar changes; do not comment on or ask about them
 - Only delete files when your changes explicitly make them obsolete
-- Before deleting any file to resolve an error, ask first
+- Do not revert, restore, or delete unfamiliar code or modifications
 
 ## Git
 
@@ -33,26 +33,15 @@ bat src/\(shared\)/Foo.tsx
 rg "pattern" path/to/my\ file.txt
 ```
 
-## Web Fetch
-
-Never fetch from `npmjs.com`—it blocks AI agents with 403. Use Bash with `npm view <pkg> readme` or Context7 MCP instead.
-
-## Testing
-
-Run tests with `uv`:
-
-```bash
-uv run pytest path/to/test.py -v
-```
-
 ## Screenshots
 
 Look for visual annotations (rectangles, arrows, circles) highlighting the relevant areas.
 
 ## Copyable Markdown
 
-Use four backticks for copyable Markdown (prevents rendering):
+Use four backticks when generating Markdown in the chat:
 
 ```markdown
 Some Markdown content
 ```
+Do not ask me about unrelated or unexpected modified files. Treat such changes as acceptable and proceed without asking how to handle them.
