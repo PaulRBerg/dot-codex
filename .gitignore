@@ -6,6 +6,7 @@ skills/
 
 # misc files
 auth.json
-history.jsonl
 config.toml
+history.jsonl
+models_cache.json
 version.json
