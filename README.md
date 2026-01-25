@@ -10,7 +10,7 @@ Personal `~/.codex` configuration and workflows for the Codex CLI.
 - `config.toml`: local runtime configuration (not checked in)
 - `config-demo.toml`: safe template for `config.toml`
 - `justfile`: automation for regenerating context
-- `flatten.py`: helper for flattening agent context
+- `helpers/flatten.py`: helper for flattening agent context
 - `prompts/`: prompt snippets
 - `sessions/`: saved sessions
 - `history.jsonl`: local run history

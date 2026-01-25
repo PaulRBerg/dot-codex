@@ -20,7 +20,7 @@ python3 := require("python3")
 # Run the flatten script; accepts a `files` arg mirroring flatten.py
 [private]
 @flatten files="AGENTS_symlink.md" *args:
-    python3 ~/.codex/flatten.py {{ files }} {{ args }}
+    python3 ~/.codex/helpers/flatten.py {{ files }} {{ args }}
 
 # Build AGENTS.md by flattening and appending extra context.
 @build:
