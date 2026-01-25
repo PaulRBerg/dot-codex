@@ -3,8 +3,8 @@
 #   - https://github.com/openai/codex/blob/main/docs/config.md
 check_for_update_on_startup = true
 file_opener = "cursor"
-model = "gpt-5.1-codex-max"
-model_reasoning_effort = "xhigh"
+model = "gpt-5.2-codex"
+model_reasoning_effort = "high"
 notify = [
   "bash",
   "-lc",
@@ -12,8 +12,6 @@ notify = [
 ]
 
 [features]
-  ghost_commit = true
-  skills = true
   web_search_request = true
 
 [shell_environment_policy]
