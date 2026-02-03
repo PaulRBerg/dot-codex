@@ -5,14 +5,8 @@ check_for_update_on_startup = true
 file_opener = "cursor"
 model = "gpt-5.2-codex"
 model_reasoning_effort = "high"
-notify = [
-  "bash",
-  "-lc",
-  "osascript -e 'display notification \"Task finished\" with title \"Codex\"'; afplay /System/Library/Sounds/Glass.aiff",
-]
-
-[features]
-  web_search_request = true
+personality = "pragmatic"
+web_search = "live"
 
 [shell_environment_policy]
   experimental_use_profile = true
