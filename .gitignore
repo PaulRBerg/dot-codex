@@ -5,6 +5,7 @@ shell_snapshots/
 skills/
 
 # misc files
+.personality_migration
 auth.json
 config.toml
 history.jsonl
