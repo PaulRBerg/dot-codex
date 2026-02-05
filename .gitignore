@@ -1,11 +1,12 @@
-# misc directories
+# directories
 log/
 sessions/
 shell_snapshots/
+skills/.system/
 sqlite/
 vendor_imports/
 
-# misc files
+# files
 .codex-global-state.json
 .personality_migration
 auth.json
