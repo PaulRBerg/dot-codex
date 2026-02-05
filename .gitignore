@@ -2,9 +2,12 @@
 log/
 sessions/
 shell_snapshots/
+sqlite/
 skills/
+vendor_imports/
 
 # misc files
+.codex-global-state.json
 .personality_migration
 auth.json
 config.toml
