@@ -3,7 +3,6 @@ log/
 sessions/
 shell_snapshots/
 sqlite/
-skills/
 vendor_imports/
 
 # misc files
