@@ -8,6 +8,13 @@ model_reasoning_effort = "high"
 personality = "pragmatic"
 web_search = "live"
 
+[mcp_servers.filesystem]
+  args = ["-y", "@modelcontextprotocol/server-filesystem", "/Users"]
+  command = "npx"
+
+[mcp_servers.openaiDeveloperDocs]
+  url = "https://developers.openai.com/mcp"
+
 [shell_environment_policy]
   experimental_use_profile = true
   ignore_default_excludes = true
