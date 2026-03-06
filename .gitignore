@@ -8,10 +8,12 @@ sqlite/
 vendor_imports/
 
 # files
+*.sqlite*
 .codex-global-state.json
 .personality_migration
 auth.json
 config.toml
 history.jsonl
 models_cache.json
+session_index.jsonl
 version.json
