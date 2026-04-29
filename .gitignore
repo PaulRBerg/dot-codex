@@ -1,6 +1,9 @@
 # directories
+.tmp/
 archived_sessions/
+cache/
 log/
+plugins/
 sessions/
 shell_snapshots/
 skills/.system/
@@ -14,6 +17,7 @@ vendor_imports/
 auth.json
 config.toml
 history.jsonl
+installation_id
 models_cache.json
 session_index.jsonl
 version.json
