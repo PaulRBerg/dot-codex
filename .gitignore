@@ -11,6 +11,7 @@ sqlite/
 vendor_imports/
 
 # files
+*.bak
 *.sqlite*
 .codex-global-state.json
 .personality_migration
