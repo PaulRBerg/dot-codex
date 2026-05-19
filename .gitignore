@@ -2,6 +2,7 @@
 .tmp/
 archived_sessions/
 cache/
+computer-use/
 log/
 plugins/
 sessions/
