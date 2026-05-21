@@ -13,14 +13,20 @@ web_search = "live"
 [features]
   apps = false
   enable_mcp_apps = false
+  multi_agent = false
   plugins = false
+  shell_snapshot = true
+  steer = true
+  unified_exec = true
+
+
+[mcp_servers.chrome-devtools]
+  args = ["-y", "chrome-devtools-mcp@latest", "--autoConnect", "--no-usage-statistics"]
+  command = "npx"
 
 [mcp_servers.filesystem]
   args = ["-y", "@modelcontextprotocol/server-filesystem", "/Users"]
   command = "npx"
-
-[mcp_servers.openaiDeveloperDocs]
-  url = "https://developers.openai.com/mcp"
 
 [shell_environment_policy]
   experimental_use_profile = true
@@ -29,3 +35,6 @@ web_search = "live"
 
 [skills.bundled]
   enabled = false
+
+[tui]
+  theme = "gruvbox-dark"
