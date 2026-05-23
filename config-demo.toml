@@ -1,15 +1,24 @@
 # See:
 #   - https://developers.openai.com/codex/local-config#cli
 #   - https://github.com/openai/codex/blob/main/docs/config.md
+
+# ---------------------------------------------------------------------------- #
+#                                   General                                    #
+# ---------------------------------------------------------------------------- #
+
 check_for_update_on_startup = true
 file_opener = "cursor"
 model = "gpt-5.5"
+model_reasoning_effort = "medium"
 personality = "friendly"
+plan_mode_reasoning_effort = "xhigh"
+sandbox_mode = "danger-full-access"
+service_tier = "default"
 web_search = "live"
 
-[apps._default]
-  enabled = false
-
+# ---------------------------------------------------------------------------- #
+#                                   Features                                   #
+# ---------------------------------------------------------------------------- #
 [features]
   apps = false
   enable_mcp_apps = false
@@ -19,7 +28,9 @@ web_search = "live"
   steer = true
   unified_exec = true
 
-
+# ---------------------------------------------------------------------------- #
+#                                 MCP Servers                                  #
+# ---------------------------------------------------------------------------- #
 [mcp_servers.chrome-devtools]
   args = ["-y", "chrome-devtools-mcp@latest", "--autoConnect", "--no-usage-statistics"]
   command = "npx"
@@ -31,14 +42,41 @@ web_search = "live"
 [mcp_servers.openaiDeveloperDocs]
   url = "https://developers.openai.com/mcp"
 
+# ---------------------------------------------------------------------------- #
+#                              Shell Environment                               #
+# ---------------------------------------------------------------------------- #
 [shell_environment_policy]
   experimental_use_profile = true
   ignore_default_excludes = true
   inherit = "all"
 
+# ---------------------------------------------------------------------------- #
+#                                     Apps                                     #
+# ---------------------------------------------------------------------------- #
+[apps._default]
+  enabled = false
+
+# ---------------------------------------------------------------------------- #
+#                                    Skills                                    #
+# ---------------------------------------------------------------------------- #
 [skills.bundled]
   enabled = false
 
+# ---------------------------------------------------------------------------- #
+#                                   Plugins                                    #
+# ---------------------------------------------------------------------------- #
+[plugins."documents@openai-primary-runtime"]
+  enabled = false
+
+[plugins."spreadsheets@openai-primary-runtime"]
+  enabled = false
+
+[plugins."presentations@openai-primary-runtime"]
+  enabled = false
+
+# ---------------------------------------------------------------------------- #
+#                                      TUI                                     #
+# ---------------------------------------------------------------------------- #
 [tui]
   theme = "gruvbox-dark"
 
