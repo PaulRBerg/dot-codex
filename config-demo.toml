@@ -32,7 +32,12 @@ web_search = "live"
 #                                 MCP Servers                                  #
 # ---------------------------------------------------------------------------- #
 [mcp_servers.chrome-devtools]
-  args = ["-y", "chrome-devtools-mcp@latest", "--autoConnect", "--no-usage-statistics"]
+  args = [
+    "-y",
+    "chrome-devtools-mcp@latest",
+    "--autoConnect",
+    "--no-usage-statistics",
+  ]
   command = "npx"
 
 [mcp_servers.filesystem]
@@ -78,6 +83,14 @@ web_search = "live"
 #                                      TUI                                     #
 # ---------------------------------------------------------------------------- #
 [tui]
+  status_line = [
+    "model-with-reasoning",
+    "git-branch",
+    "context-used",
+    "used-tokens",
+    "current-dir",
+  ]
+  status_line_use_colors = true
   theme = "gruvbox-dark"
 
 # See https://github.com/openai/codex/issues/9807#issuecomment-4516234724
@@ -87,7 +100,4 @@ web_search = "live"
   global.toggle_fast_mode = "alt-f"
 
   # need to set because `alt-f` is by default set to `move_word_right`
-  editor.move_word_right = [
-    "alt-right",
-    "ctrl-right",
-  ]
+  editor.move_word_right = ["alt-right", "ctrl-right"]
