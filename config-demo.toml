@@ -88,7 +88,6 @@ web_search = "live"
     "git-branch",
     "context-used",
     "used-tokens",
-    "current-dir",
   ]
   status_line_use_colors = true
   theme = "gruvbox-dark"
