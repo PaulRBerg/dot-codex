@@ -68,18 +68,6 @@ web_search = "live"
   enabled = false
 
 # ---------------------------------------------------------------------------- #
-#                                   Plugins                                    #
-# ---------------------------------------------------------------------------- #
-[plugins."documents@openai-primary-runtime"]
-  enabled = false
-
-[plugins."spreadsheets@openai-primary-runtime"]
-  enabled = false
-
-[plugins."presentations@openai-primary-runtime"]
-  enabled = false
-
-# ---------------------------------------------------------------------------- #
 #                                      TUI                                     #
 # ---------------------------------------------------------------------------- #
 [tui]
