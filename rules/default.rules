@@ -1,0 +1,28 @@
+# Prefer uv-managed Python invocations.
+prefix_rule(
+    pattern = [["python", "python3"]],
+    decision = "forbidden",
+    justification = "Use `uv run` instead of `python` to keep the interpreter and dependencies consistent.",
+    match = [
+        "python script.py",
+        "python3 -m pytest",
+    ],
+    not_match = [
+        "uv run python script.py",
+        "uv run python3 -m pytest",
+    ],
+)
+
+prefix_rule(
+    pattern = [["pip", "pip3"]],
+    decision = "forbidden",
+    justification = "Use `uv add/remove` for dependencies or `uv run --with` for one-off scripts instead of `pip`.",
+    match = [
+        "pip install requests",
+        "pip3 install -r requirements.txt",
+    ],
+    not_match = [
+        "uv add requests",
+        "uv run --with requests python script.py",
+    ],
+)
