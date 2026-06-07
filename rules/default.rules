@@ -26,3 +26,20 @@ prefix_rule(
         "uv run --with requests python script.py",
     ],
 )
+
+prefix_rule(
+    pattern = [["grep", "egrep", "fgrep"]],
+    decision = "forbidden",
+    justification = "Use `rg` (RipGrep) for text and file searches instead of `grep`; use `grep` only after verifying `rg` is unavailable.",
+    match = [
+        "grep pattern file.txt",
+        "grep -R pattern .",
+        "egrep 'foo|bar' file.txt",
+        "fgrep pattern file.txt",
+    ],
+    not_match = [
+        "rg pattern file.txt",
+        "rg -n pattern .",
+        "git grep pattern",
+    ],
+)
