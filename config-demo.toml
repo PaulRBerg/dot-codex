@@ -1,3 +1,4 @@
+#:schema https://developers.openai.com/codex/config-schema.json
 # See:
 #   - https://developers.openai.com/codex/local-config#cli
 #   - https://github.com/openai/codex/blob/main/docs/config.md
@@ -7,25 +8,49 @@
 # ---------------------------------------------------------------------------- #
 
 check_for_update_on_startup = true
-file_opener = "cursor"
 model = "gpt-5.5"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "xhigh"
 personality = "friendly"
 plan_mode_reasoning_effort = "xhigh"
 sandbox_mode = "danger-full-access"
 service_tier = "default"
+suppress_unstable_features_warning = true
 web_search = "live"
+
+# ---------------------------------------------------------------------------- #
+#                                     Apps                                     #
+# ---------------------------------------------------------------------------- #
+[apps._default]
+  enabled = false
+
+# ---------------------------------------------------------------------------- #
+#                                    Desktop                                   #
+# ---------------------------------------------------------------------------- #
+[desktop]
+  composerEnterBehavior = "enter"
+  followUpQueueMode = "steer"
+  keepRemoteControlAwakeWhilePluggedIn = true
+  notifications-permissions-enabled = false
+  notifications-turn-mode = "unfocused"
+  preventSleepWhileRunning = true
+  usePointerCursors = true
+
+[desktop.open-in-target-preferences]
+  global = "cursor"
 
 # ---------------------------------------------------------------------------- #
 #                                   Features                                   #
 # ---------------------------------------------------------------------------- #
 [features]
   apps = false
-  enable_mcp_apps = false
-  multi_agent = false
+  browser_use = false
+  browser_use_external = false
+  computer_use = false
+  in_app_browser = false
+  multi_agent = true
   plugins = false
+  remote_compaction_v2 = true
   shell_snapshot = true
-  steer = true
   unified_exec = true
 
 # ---------------------------------------------------------------------------- #
@@ -36,13 +61,21 @@ web_search = "live"
     "-y",
     "chrome-devtools-mcp@latest",
     "--autoConnect",
+    "--experimental-page-id-routing",
+    "--experimental-memory",
+    "--experimental-vision",
+    "--experimental-structured-content",
+    "--experimental-screencast",
+    "--experimental-ffmpeg-path=/opt/homebrew/bin/ffmpeg",
+    "--redact-network-headers",
+    "--no-performance-crux",
     "--no-usage-statistics",
   ]
-  command = "npx"
+  command = "bunx"
 
 [mcp_servers.filesystem]
   args = ["-y", "@modelcontextprotocol/server-filesystem", "/Users"]
-  command = "npx"
+  command = "bunx"
 
 [mcp_servers.openaiDeveloperDocs]
   url = "https://developers.openai.com/mcp"
@@ -56,16 +89,11 @@ web_search = "live"
   inherit = "all"
 
 # ---------------------------------------------------------------------------- #
-#                                     Apps                                     #
+#                                    Notice                                    #
 # ---------------------------------------------------------------------------- #
-[apps._default]
-  enabled = false
-
-# ---------------------------------------------------------------------------- #
-#                                    Skills                                    #
-# ---------------------------------------------------------------------------- #
-[skills.bundled]
-  enabled = false
+[notice]
+  fast_default_opt_out = true
+  hide_rate_limit_model_nudge = true
 
 # ---------------------------------------------------------------------------- #
 #                                      TUI                                     #

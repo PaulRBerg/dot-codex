@@ -1,32 +1,153 @@
-# Prefer uv-managed Python invocations.
+# Block Bash associative arrays at the top level; wrap in an explicit `bash <<'EOF'` block.
 prefix_rule(
-    pattern = [["python", "python3"]],
+    pattern = [["declare"], ["-A"]],
     decision = "forbidden",
-    justification = "Use `uv run` instead of `python` to keep the interpreter and dependencies consistent.",
+    justification = "`declare -A` is Bash-specific in this workflow; wrap Bash-only constructs in an explicit `bash <<'EOF'` block or script.",
     match = [
-        "python script.py",
-        "python3 -m pytest",
+        "declare -A color",
     ],
     not_match = [
-        "uv run python script.py",
-        "uv run python3 -m pytest",
+        "bash -lc 'declare -A color'",
+        "bash <<'EOF'\ndeclare -A color\nEOF",
     ],
 )
 
+# Prompt before creating GitHub releases (publishes external state).
 prefix_rule(
-    pattern = [["pip", "pip3"]],
-    decision = "forbidden",
-    justification = "Use `uv add/remove` for dependencies or `uv run --with` for one-off scripts instead of `pip`.",
+    pattern = [["gh"], ["release"], ["create"]],
+    decision = "prompt",
+    justification = "Creating a GitHub release publishes external state; verify tag, notes, and artifacts first.",
     match = [
-        "pip install requests",
-        "pip3 install -r requirements.txt",
+        "gh release create v1.2.3",
     ],
     not_match = [
-        "uv add requests",
-        "uv run --with requests python script.py",
+        "gh release view v1.2.3",
+        "gh release list",
     ],
 )
 
+# Prompt before GitHub secret read/write operations.
+prefix_rule(
+    pattern = [["gh"], ["secret"]],
+    decision = "prompt",
+    justification = "Secret operations can expose or mutate sensitive credentials; verify scope and avoid printing secret values.",
+    match = [
+        "gh secret set TOKEN",
+        "gh secret list",
+    ],
+    not_match = [
+        "gh repo view",
+        "gh auth status",
+    ],
+)
+
+# Prompt before force-deleting a git branch.
+prefix_rule(
+    pattern = [["git"], ["branch"], ["-D"]],
+    decision = "prompt",
+    justification = "`git branch -D` force-deletes a branch; verify it is merged or intentionally disposable.",
+    match = [
+        "git branch -D old-work",
+    ],
+    not_match = [
+        "git branch -d merged-work",
+        "git branch --list",
+    ],
+)
+
+# Prompt before discarding worktree changes via `git checkout --`.
+prefix_rule(
+    pattern = [["git"], ["checkout"], ["--"]],
+    decision = "prompt",
+    justification = "`git checkout -- <path>` discards worktree changes; inspect the diff and confirm intent first.",
+    match = [
+        "git checkout -- src/app.ts",
+    ],
+    not_match = [
+        "git checkout main",
+        "git checkout -b feature",
+    ],
+)
+
+# Prompt before deleting untracked files with `git clean`.
+prefix_rule(
+    pattern = [["git"], ["clean"], ["-f", "-ff", "-fd", "-df", "-fdx", "-fxd", "-xdf"]],
+    decision = "prompt",
+    justification = "`git clean` deletes untracked files; preview with `git clean -nd` and confirm intent first.",
+    match = [
+        "git clean -fd",
+        "git clean -fdx",
+    ],
+    not_match = [
+        "git clean -nd",
+        "git status --short",
+    ],
+)
+
+# Prompt before force-pushing (rewrites remote history).
+prefix_rule(
+    pattern = [["git"], ["push"], ["--force", "--force-with-lease", "-f"]],
+    decision = "prompt",
+    justification = "Force-pushing rewrites remote history; confirm branch, remote, and collaboration impact first.",
+    match = [
+        "git push --force",
+        "git push --force-with-lease origin main",
+        "git push -f",
+    ],
+    not_match = [
+        "git push",
+        "git push origin main",
+    ],
+)
+
+# Prompt before history-rewriting git commands (rebase, filter-repo, filter-branch).
+prefix_rule(
+    pattern = [["git"], ["rebase", "filter-repo", "filter-branch"]],
+    decision = "prompt",
+    justification = "History-rewriting git commands need explicit intent and a clean understanding of downstream impact.",
+    match = [
+        "git rebase main",
+        "git filter-repo --path secrets.txt --invert-paths",
+        "git filter-branch --tree-filter 'rm secrets.txt'",
+    ],
+    not_match = [
+        "git merge main",
+        "git log --oneline",
+    ],
+)
+
+# Prompt before discarding local changes with `git reset --hard`.
+prefix_rule(
+    pattern = [["git"], ["reset"], ["--hard"]],
+    decision = "prompt",
+    justification = "`git reset --hard` discards local changes; inspect the worktree and confirm intent first.",
+    match = [
+        "git reset --hard",
+        "git reset --hard HEAD~1",
+    ],
+    not_match = [
+        "git reset --soft HEAD~1",
+        "git reset --mixed HEAD~1",
+    ],
+)
+
+# Prompt before discarding worktree changes via `git restore`.
+prefix_rule(
+    pattern = [["git"], ["restore"], [".", "--worktree", "--source"]],
+    decision = "prompt",
+    justification = "`git restore` can discard worktree changes; inspect the diff and confirm intent first.",
+    match = [
+        "git restore .",
+        "git restore --worktree src/app.ts",
+        "git restore --source HEAD~1 src/app.ts",
+    ],
+    not_match = [
+        "git restore --staged src/app.ts",
+        "git diff src/app.ts",
+    ],
+)
+
+# Prefer `rg` over grep/egrep/fgrep for text and file searches.
 prefix_rule(
     pattern = [["grep", "egrep", "fgrep"]],
     decision = "prompt",
@@ -41,5 +162,128 @@ prefix_rule(
         "rg pattern file.txt",
         "rg -n pattern .",
         "git grep pattern",
+    ],
+)
+
+# Block Bash-only builtins at the top level; wrap in an explicit `bash <<'EOF'` block.
+prefix_rule(
+    pattern = [["mapfile", "readarray", "shopt"]],
+    decision = "forbidden",
+    justification = "This is Bash-specific; wrap Bash-only constructs in an explicit `bash <<'EOF'` block or script.",
+    match = [
+        "mapfile -t lines < file.txt",
+        "readarray -t lines < file.txt",
+        "shopt -s globstar",
+    ],
+    not_match = [
+        "bash -lc 'mapfile -t lines < file.txt'",
+        "bash <<'EOF'\nshopt -s globstar\nEOF",
+    ],
+)
+
+# Prompt before running package deploy/release scripts.
+prefix_rule(
+    pattern = [["npm", "pnpm", "bun"], ["run"], ["deploy", "release"]],
+    decision = "prompt",
+    justification = "Deploy/release scripts can publish external state; inspect the script and target environment first.",
+    match = [
+        "npm run deploy",
+        "pnpm run release",
+        "bun run deploy",
+    ],
+    not_match = [
+        "npm run build",
+        "pnpm run test",
+    ],
+)
+
+# Prompt before `pass` commands that reveal or mutate secrets.
+prefix_rule(
+    pattern = [["pass"], ["show", "insert", "edit", "rm"]],
+    decision = "prompt",
+    justification = "`pass` commands can reveal or mutate secrets; verify path and output handling.",
+    match = [
+        "pass show github/token",
+        "pass insert service/token",
+        "pass rm service/token",
+    ],
+    not_match = [
+        "pass ls",
+        "pass git status",
+    ],
+)
+
+# Use `uv` for dependencies instead of `pip`.
+prefix_rule(
+    pattern = [["pip", "pip3"]],
+    decision = "forbidden",
+    justification = "Use `uv add/remove` for dependencies or `uv run --with` for one-off scripts instead of `pip`.",
+    match = [
+        "pip install requests",
+        "pip3 install -r requirements.txt",
+    ],
+    not_match = [
+        "uv add requests",
+        "uv run --with requests python script.py",
+    ],
+)
+
+# Prefer `uv run` over bare `python`/`python3` invocations.
+prefix_rule(
+    pattern = [["python", "python3"]],
+    decision = "forbidden",
+    justification = "Use `uv run` instead of `python` to keep the interpreter and dependencies consistent.",
+    match = [
+        "python script.py",
+        "python3 -m pytest",
+    ],
+    not_match = [
+        "uv run python script.py",
+        "uv run python3 -m pytest",
+    ],
+)
+
+# Prompt before recursive bulk deletion with `rm -r`/`rm -rf`.
+prefix_rule(
+    pattern = [["rm"], ["-rf", "-fr", "-r", "-R"]],
+    decision = "prompt",
+    justification = "`rm -r`/`rm -rf` can irreversibly delete large trees; verify the target and prefer a safer scoped deletion.",
+    match = [
+        "rm -rf dist",
+        "rm -r tmp",
+        "rm -R build",
+    ],
+    not_match = [
+        "rm file.txt",
+        "trash dist",
+    ],
+)
+
+# Prompt before macOS keychain reads that can print secrets.
+prefix_rule(
+    pattern = [["security"], ["find-generic-password", "find-internet-password"]],
+    decision = "prompt",
+    justification = "macOS keychain reads can print secrets; verify the account/service and redact outputs.",
+    match = [
+        "security find-generic-password -s service -w",
+        "security find-internet-password -s example.com -w",
+    ],
+    not_match = [
+        "security list-keychains",
+        "security find-certificate -a",
+    ],
+)
+
+# Prompt before `sops` decrypt/encrypt/edit that can expose secrets.
+prefix_rule(
+    pattern = [["sops"], ["-d", "--decrypt", "--encrypt", "--rotate", "edit"]],
+    decision = "prompt",
+    justification = "`sops` commands can reveal or mutate secrets; verify recipients and avoid printing decrypted content.",
+    match = [
+        "sops -d secrets.yaml",
+        "sops edit secrets.yaml",
+    ],
+    not_match = [
+        "sops --version",
     ],
 )
