@@ -29,8 +29,8 @@ prefix_rule(
 
 prefix_rule(
     pattern = [["grep", "egrep", "fgrep"]],
-    decision = "forbidden",
-    justification = "Use `rg` (RipGrep) for text and file searches instead of `grep`; use `grep` only after verifying `rg` is unavailable.",
+    decision = "prompt",
+    justification = "Prefer `rg` (RipGrep) for text and file searches; use `grep` only when `rg` is unavailable or a command truly needs grep semantics.",
     match = [
         "grep pattern file.txt",
         "grep -R pattern .",
