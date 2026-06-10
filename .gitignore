@@ -5,13 +5,13 @@ cache/
 computer-use/
 generated_images/
 log/
+packages/
 plugins/
 sessions/
 shell_snapshots/
 skills/.system/
 sqlite/
 vendor_imports/
-packages/standalone/releases/
 
 # files
 *.bak
