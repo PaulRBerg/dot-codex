@@ -66,6 +66,18 @@ I manage my dotfiles with [chezmoi](https://www.chezmoi.io); the source tree liv
 
 **VSCode** and **Cursor** share one user configuration. VSCode is the source of truth; Cursor's `settings.json`, `keybindings.json`, and `tasks.json` are symlinks to VSCode's copies in `~/Library/Application Support/Code/User/`. Settings are unified — a change in one editor takes effect in both, so never maintain per-editor copies.
 
+## Speed Traps
+
+- Verify paths and cwd before commands that assume a location: use `test -e`, `rg --files`, or `fd` instead of guessing.
+- Use single quotes or `rg -F` for shell-sensitive search patterns. Use `rg -P` only when the pattern needs lookaround or
+  other PCRE features.
+- For patch-compatible TSV diffs, use `git diff --no-ext-diff --no-textconv -- <paths>`. Never pipe daff-rendered TSV
+  diffs into `git apply`.
+- Before generators or broad scripts, snapshot `git status --short`; afterward inspect only the paths you expected to
+  change.
+- Cap private financial CSV/TSV output. Summarize counts and file refs unless raw rows were explicitly requested.
+- Preflight secret, live, or API commands with harmless env checks, and state whether the command writes repo artifacts.
+
 ## Codex
 
 - `~/.codex/AGENTS.md` is generated from `AGENTS_symlink.md` plus `context/AGENTS_EXTRA.md`. Edit those sources and run `just build`; do not hand-edit the generated file.
