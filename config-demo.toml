@@ -99,6 +99,7 @@ web_search = "live"
 #                                      TUI                                     #
 # ---------------------------------------------------------------------------- #
 [tui]
+  show_tooltips = false
   status_line = [
     "model-with-reasoning",
     "git-branch",
@@ -116,3 +117,6 @@ web_search = "live"
 
   # need to set because `alt-f` is by default set to `move_word_right`
   editor.move_word_right = ["alt-right", "ctrl-right"]
+
+[tui.model_availability_nux]
+  "gpt-5.5" = 4
