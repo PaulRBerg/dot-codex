@@ -111,8 +111,6 @@ web_search = "live"
 
 # See https://github.com/openai/codex/issues/9807#issuecomment-4516234724
 [tui.keymap]
-  chat.decrease_reasoning_effort = "alt-minus"
-  chat.increase_reasoning_effort = ["alt-="]
   global.toggle_fast_mode = "alt-f"
 
   # need to set because `alt-f` is by default set to `move_word_right`
