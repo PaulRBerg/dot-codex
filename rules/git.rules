@@ -1,0 +1,105 @@
+# Prompt before force-deleting a git branch.
+prefix_rule(
+    pattern = [["git"], ["branch"], ["-D"]],
+    decision = "prompt",
+    justification = "`git branch -D` force-deletes a branch; verify it is merged or intentionally disposable.",
+    match = [
+        "git branch -D old-work",
+    ],
+    not_match = [
+        "git branch -d merged-work",
+        "git branch --list",
+    ],
+)
+
+# Prompt before discarding worktree changes via `git checkout --`.
+prefix_rule(
+    pattern = [["git"], ["checkout"], ["--"]],
+    decision = "prompt",
+    justification = "`git checkout -- <path>` discards worktree changes; inspect the diff and confirm intent first.",
+    match = [
+        "git checkout -- src/app.ts",
+    ],
+    not_match = [
+        "git checkout main",
+        "git checkout -b feature",
+    ],
+)
+
+# Prompt before deleting untracked files with `git clean`.
+prefix_rule(
+    pattern = [["git"], ["clean"], ["-f", "-ff", "-fd", "-df", "-fdx", "-fxd", "-xdf"]],
+    decision = "prompt",
+    justification = "`git clean` deletes untracked files; preview with `git clean -nd` and confirm intent first.",
+    match = [
+        "git clean -fd",
+        "git clean -fdx",
+    ],
+    not_match = [
+        "git clean -nd",
+        "git status --short",
+    ],
+)
+
+# Prompt before force-pushing (rewrites remote history).
+prefix_rule(
+    pattern = [["git"], ["push"], ["--force", "--force-with-lease", "-f"]],
+    decision = "prompt",
+    justification = "Force-pushing rewrites remote history; confirm branch, remote, and collaboration impact first.",
+    match = [
+        "git push --force",
+        "git push --force-with-lease origin main",
+        "git push -f",
+    ],
+    not_match = [
+        "git push",
+        "git push origin main",
+    ],
+)
+
+# Prompt before history-rewriting git commands (rebase, filter-repo, filter-branch).
+prefix_rule(
+    pattern = [["git"], ["rebase", "filter-repo", "filter-branch"]],
+    decision = "prompt",
+    justification = "History-rewriting git commands need explicit intent and a clean understanding of downstream impact.",
+    match = [
+        "git rebase main",
+        "git filter-repo --path secrets.txt --invert-paths",
+        "git filter-branch --tree-filter 'rm secrets.txt'",
+    ],
+    not_match = [
+        "git merge main",
+        "git log --oneline",
+    ],
+)
+
+# Prompt before discarding local changes with `git reset --hard`.
+prefix_rule(
+    pattern = [["git"], ["reset"], ["--hard"]],
+    decision = "prompt",
+    justification = "`git reset --hard` discards local changes; inspect the worktree and confirm intent first.",
+    match = [
+        "git reset --hard",
+        "git reset --hard HEAD~1",
+    ],
+    not_match = [
+        "git reset --soft HEAD~1",
+        "git reset --mixed HEAD~1",
+    ],
+)
+
+# Prompt before discarding worktree changes via `git restore`.
+prefix_rule(
+    pattern = [["git"], ["restore"], [".", "--worktree", "--source"]],
+    decision = "prompt",
+    justification = "`git restore` can discard worktree changes; inspect the diff and confirm intent first.",
+    match = [
+        "git restore .",
+        "git restore --worktree src/app.ts",
+        "git restore --source HEAD~1 src/app.ts",
+    ],
+    not_match = [
+        "git restore --staged src/app.ts",
+        "git diff src/app.ts",
+    ],
+)

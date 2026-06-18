@@ -1,0 +1,28 @@
+# Prompt before creating GitHub releases (publishes external state).
+prefix_rule(
+    pattern = [["gh"], ["release"], ["create"]],
+    decision = "prompt",
+    justification = "Creating a GitHub release publishes external state; verify tag, notes, and artifacts first.",
+    match = [
+        "gh release create v1.2.3",
+    ],
+    not_match = [
+        "gh release view v1.2.3",
+        "gh release list",
+    ],
+)
+
+# Prompt before GitHub secret read/write operations.
+prefix_rule(
+    pattern = [["gh"], ["secret"]],
+    decision = "prompt",
+    justification = "Secret operations can expose or mutate sensitive credentials; verify scope and avoid printing secret values.",
+    match = [
+        "gh secret set TOKEN",
+        "gh secret list",
+    ],
+    not_match = [
+        "gh repo view",
+        "gh auth status",
+    ],
+)

@@ -1,0 +1,16 @@
+# Prompt before recursive bulk deletion with `rm -r`/`rm -rf`; allow recoverable `trash`.
+prefix_rule(
+    pattern = [["rm"], ["-rf", "-fr", "-r", "-R"]],
+    decision = "prompt",
+    justification = "`rm -r`/`rm -rf` can irreversibly delete large trees; verify the target and prefer recoverable `trash -s` when appropriate.",
+    match = [
+        "rm -rf dist",
+        "rm -r tmp",
+        "rm -R build",
+    ],
+    not_match = [
+        "rm file.txt",
+        "trash dist",
+        "trash -s dist",
+    ],
+)

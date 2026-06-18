@@ -1,0 +1,15 @@
+# Prompt before running package deploy/release scripts.
+prefix_rule(
+    pattern = [["npm", "pnpm", "bun"], ["run"], ["deploy", "release"]],
+    decision = "prompt",
+    justification = "Deploy/release scripts can publish external state; inspect the script and target environment first.",
+    match = [
+        "npm run deploy",
+        "pnpm run release",
+        "bun run deploy",
+    ],
+    not_match = [
+        "npm run build",
+        "pnpm run test",
+    ],
+)

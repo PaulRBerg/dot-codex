@@ -1,0 +1,47 @@
+# Block Bash associative arrays at the top level; wrap in an explicit `bash <<'EOF'` block.
+prefix_rule(
+    pattern = [["declare"], ["-A"]],
+    decision = "forbidden",
+    justification = "`declare -A` is Bash-specific in this workflow; wrap Bash-only constructs in an explicit `bash <<'EOF'` block or script.",
+    match = [
+        "declare -A color",
+    ],
+    not_match = [
+        "bash -lc 'declare -A color'",
+        "bash <<'EOF'\ndeclare -A color\nEOF",
+    ],
+)
+
+# Prefer `rg` over grep/egrep/fgrep for text and file searches.
+prefix_rule(
+    pattern = [["grep", "egrep", "fgrep"]],
+    decision = "prompt",
+    justification = "Prefer `rg` (RipGrep) for text and file searches; use `grep` only when `rg` is unavailable or a command truly needs grep semantics.",
+    match = [
+        "grep pattern file.txt",
+        "grep -R pattern .",
+        "egrep 'foo|bar' file.txt",
+        "fgrep pattern file.txt",
+    ],
+    not_match = [
+        "rg pattern file.txt",
+        "rg -n pattern .",
+        "git grep pattern",
+    ],
+)
+
+# Block Bash-only builtins at the top level; wrap in an explicit `bash <<'EOF'` block.
+prefix_rule(
+    pattern = [["mapfile", "readarray", "shopt"]],
+    decision = "forbidden",
+    justification = "This is Bash-specific; wrap Bash-only constructs in an explicit `bash <<'EOF'` block or script.",
+    match = [
+        "mapfile -t lines < file.txt",
+        "readarray -t lines < file.txt",
+        "shopt -s globstar",
+    ],
+    not_match = [
+        "bash -lc 'mapfile -t lines < file.txt'",
+        "bash <<'EOF'\nshopt -s globstar\nEOF",
+    ],
+)
