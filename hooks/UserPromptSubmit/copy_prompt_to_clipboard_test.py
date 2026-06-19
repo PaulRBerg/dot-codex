@@ -87,11 +87,100 @@ class TestSanitizePrompt(unittest.TestCase):
         self.assertEqual(hook.sanitize_prompt("\n" * (hook.MAX_LINES + 10)), "")
 
 
+class TestMetadataPrefix(unittest.TestCase):
+    def test_builds_metadata_with_thread_id(self) -> None:
+        data = {
+            "cwd": "/tmp/work/my repo/subdir",
+            "thread_id": "0199a213-81c0-7800-8aa1-bbab2a035a53",
+        }
+
+        with patch.object(hook, "_git_output", side_effect=["/tmp/work/my repo", ""]):
+            self.assertEqual(
+                hook.build_metadata_prefix(data),
+                "[repo:my-repo thread:0199a213]",
+            )
+
+    def test_prefers_remote_repo_name(self) -> None:
+        data = {
+            "cwd": "/tmp/work/.codex",
+            "thread_id": "0199a213-81c0-7800-8aa1-bbab2a035a53",
+        }
+
+        with patch.object(
+            hook,
+            "_git_output",
+            side_effect=[
+                "/tmp/work/.codex",
+                "git@github.com:PaulRBerg/dot-codex.git",
+            ],
+        ):
+            self.assertEqual(
+                hook.build_metadata_prefix(data),
+                "[repo:dot-codex thread:0199a213]",
+            )
+
+    def test_builds_metadata_with_nested_thread_id(self) -> None:
+        data = {
+            "cwd": "/tmp/work/demo",
+            "thread": {"threadId": "thr_1234567890"},
+        }
+
+        with patch.object(hook, "_git_output", side_effect=["/tmp/work/demo", ""]):
+            self.assertEqual(
+                hook.build_metadata_prefix(data),
+                "[repo:demo thread:thr_1234]",
+            )
+
+    def test_builds_metadata_with_git_ref_when_thread_missing(self) -> None:
+        data = {"cwd": "/tmp/work/demo"}
+
+        with patch.object(
+            hook,
+            "_git_output",
+            side_effect=["/tmp/work/demo", "", "dd66016a"],
+        ):
+            self.assertEqual(
+                hook.build_metadata_prefix(data),
+                "[repo:demo ref:dd66016a]",
+            )
+
+    def test_builds_metadata_with_path_ref_when_git_unavailable(self) -> None:
+        data = {"cwd": "/tmp/work/demo"}
+
+        with patch.object(hook, "_git_output", return_value=""):
+            with patch.object(hook, "_path_reference", return_value="deadbeef"):
+                self.assertEqual(
+                    hook.build_metadata_prefix(data),
+                    "[repo:demo ref:deadbeef]",
+                )
+
+    def test_formats_clipboard_prompt_with_metadata(self) -> None:
+        with patch.object(
+            hook,
+            "build_metadata_prefix",
+            return_value="[repo:demo thread:0199a213]",
+        ):
+            self.assertEqual(
+                hook.format_clipboard_prompt("hello **world**", {}),
+                "[repo:demo thread:0199a213]\nhello **world**",
+            )
+
+    def test_format_skips_metadata_when_prompt_is_empty(self) -> None:
+        with patch.object(hook, "build_metadata_prefix") as mock_prefix:
+            self.assertEqual(hook.format_clipboard_prompt("   \n", {}), "")
+            mock_prefix.assert_not_called()
+
+
 class TestMain(unittest.TestCase):
     def _run_main(self, raw: str) -> Any:
-        with patch.object(hook.sys, "stdin", StringIO(raw)):
-            with self.assertRaises(SystemExit) as exc_info:
-                hook.main()
+        with patch.object(
+            hook,
+            "build_metadata_prefix",
+            return_value="[repo:demo thread:0199a213]",
+        ):
+            with patch.object(hook.sys, "stdin", StringIO(raw)):
+                with self.assertRaises(SystemExit) as exc_info:
+                    hook.main()
 
         return exc_info.exception.code
 
@@ -102,7 +191,10 @@ class TestMain(unittest.TestCase):
         self.assertEqual(self._run_main(json.dumps({"prompt": "hello world"})), 0)
         mock_run.assert_called_once()
         self.assertEqual(mock_run.call_args.args[0], [hook.PBCOPY])
-        self.assertEqual(mock_run.call_args.kwargs["input"], "hello world")
+        self.assertEqual(
+            mock_run.call_args.kwargs["input"],
+            "[repo:demo thread:0199a213]\nhello world",
+        )
 
     @patch.object(hook.subprocess, "run")
     def test_writes_nothing_to_stdout(self, mock_run: MagicMock) -> None:
@@ -128,6 +220,31 @@ class TestMain(unittest.TestCase):
     def test_skips_pbcopy_when_prompt_is_not_string(self, mock_run: MagicMock) -> None:
         self.assertEqual(self._run_main(json.dumps({"prompt": 123})), 0)
         mock_run.assert_not_called()
+
+    @patch.object(hook.subprocess, "run")
+    def test_metadata_failure_copies_sanitized_prompt(
+        self, mock_run: MagicMock
+    ) -> None:
+        mock_run.return_value = MagicMock(returncode=0, stderr="")
+        stderr = StringIO()
+
+        with patch.object(
+            hook,
+            "build_metadata_prefix",
+            side_effect=RuntimeError("boom"),
+        ):
+            with patch.object(
+                hook.sys,
+                "stdin",
+                StringIO(json.dumps({"prompt": "hello world"})),
+            ):
+                with redirect_stderr(stderr):
+                    with self.assertRaises(SystemExit) as exc_info:
+                        hook.main()
+
+        self.assertEqual(exc_info.exception.code, 0)
+        self.assertEqual(mock_run.call_args.kwargs["input"], "hello world")
+        self.assertIn("Warning: metadata prefix failed", stderr.getvalue())
 
     @patch.object(hook.subprocess, "run")
     def test_exits_on_invalid_json(self, mock_run: MagicMock) -> None:

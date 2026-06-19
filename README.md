@@ -39,6 +39,7 @@ Active hooks:
 
 The clipboard hook sanitizes noisy prompt content before copying:
 
+- A compact metadata prefix such as `[repo:dot-codex thread:0199a213]` is prepended for provenance.
 - Claude/Codex paste and image markers are normalized to `Pasted`.
 - Fenced code blocks are collapsed to `[code]`, including unterminated fences.
 - Long lines and over-cap prompts are bounded with `[Pasted]`.
