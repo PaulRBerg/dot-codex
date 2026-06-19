@@ -41,22 +41,6 @@ prefix_rule(
     ],
 )
 
-# Prompt before force-pushing (rewrites remote history).
-prefix_rule(
-    pattern = [["git"], ["push"], ["--force", "--force-with-lease", "-f"]],
-    decision = "prompt",
-    justification = "Force-pushing rewrites remote history; confirm branch, remote, and collaboration impact first.",
-    match = [
-        "git push --force",
-        "git push --force-with-lease origin main",
-        "git push -f",
-    ],
-    not_match = [
-        "git push",
-        "git push origin main",
-    ],
-)
-
 # Prompt before history-rewriting git commands (rebase, filter-repo, filter-branch).
 prefix_rule(
     pattern = [["git"], ["rebase", "filter-repo", "filter-branch"]],
