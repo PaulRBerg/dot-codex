@@ -16,6 +16,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 import copy_prompt_to_clipboard as hook  # noqa: E402
 
 
+def _long_prompt() -> str:
+    return "x" * hook.MIN_PROMPT_CHARS
+
+
 class TestSanitizePrompt(unittest.TestCase):
     def test_preserves_normal_prompt(self) -> None:
         self.assertEqual(hook.sanitize_prompt("hello **world**"), "hello **world**")
@@ -155,15 +159,25 @@ class TestMetadataPrefix(unittest.TestCase):
                 )
 
     def test_formats_clipboard_prompt_with_metadata(self) -> None:
+        prompt = _long_prompt()
+
         with patch.object(
             hook,
             "build_metadata_prefix",
             return_value="[repo:demo thread:0199a213]",
         ):
             self.assertEqual(
-                hook.format_clipboard_prompt("hello **world**", {}),
-                "[repo:demo thread:0199a213]\nhello **world**",
+                hook.format_clipboard_prompt(prompt, {}),
+                f"[repo:demo thread:0199a213]\n{prompt}",
             )
+
+    def test_format_skips_short_prompt_before_metadata(self) -> None:
+        with patch.object(hook, "build_metadata_prefix") as mock_prefix:
+            self.assertEqual(
+                hook.format_clipboard_prompt("x" * (hook.MIN_PROMPT_CHARS - 1), {}),
+                "",
+            )
+            mock_prefix.assert_not_called()
 
     def test_format_skips_metadata_when_prompt_is_empty(self) -> None:
         with patch.object(hook, "build_metadata_prefix") as mock_prefix:
@@ -186,14 +200,15 @@ class TestMain(unittest.TestCase):
 
     @patch.object(hook.subprocess, "run")
     def test_copies_sanitized_prompt(self, mock_run: MagicMock) -> None:
+        prompt = _long_prompt()
         mock_run.return_value = MagicMock(returncode=0, stderr="")
 
-        self.assertEqual(self._run_main(json.dumps({"prompt": "hello world"})), 0)
+        self.assertEqual(self._run_main(json.dumps({"prompt": prompt})), 0)
         mock_run.assert_called_once()
         self.assertEqual(mock_run.call_args.args[0], [hook.PBCOPY])
         self.assertEqual(
             mock_run.call_args.kwargs["input"],
-            "[repo:demo thread:0199a213]\nhello world",
+            f"[repo:demo thread:0199a213]\n{prompt}",
         )
 
     @patch.object(hook.subprocess, "run")
@@ -202,9 +217,16 @@ class TestMain(unittest.TestCase):
         stdout = StringIO()
 
         with redirect_stdout(stdout):
-            self.assertEqual(self._run_main(json.dumps({"prompt": "hello world"})), 0)
+            self.assertEqual(self._run_main(json.dumps({"prompt": _long_prompt()})), 0)
 
         self.assertEqual(stdout.getvalue(), "")
+
+    @patch.object(hook.subprocess, "run")
+    def test_skips_pbcopy_when_prompt_is_short(self, mock_run: MagicMock) -> None:
+        prompt = "x" * (hook.MIN_PROMPT_CHARS - 1)
+
+        self.assertEqual(self._run_main(json.dumps({"prompt": prompt})), 0)
+        mock_run.assert_not_called()
 
     @patch.object(hook.subprocess, "run")
     def test_skips_pbcopy_when_empty(self, mock_run: MagicMock) -> None:
@@ -225,6 +247,7 @@ class TestMain(unittest.TestCase):
     def test_metadata_failure_copies_sanitized_prompt(
         self, mock_run: MagicMock
     ) -> None:
+        prompt = _long_prompt()
         mock_run.return_value = MagicMock(returncode=0, stderr="")
         stderr = StringIO()
 
@@ -236,14 +259,14 @@ class TestMain(unittest.TestCase):
             with patch.object(
                 hook.sys,
                 "stdin",
-                StringIO(json.dumps({"prompt": "hello world"})),
+                StringIO(json.dumps({"prompt": prompt})),
             ):
                 with redirect_stderr(stderr):
                     with self.assertRaises(SystemExit) as exc_info:
                         hook.main()
 
         self.assertEqual(exc_info.exception.code, 0)
-        self.assertEqual(mock_run.call_args.kwargs["input"], "hello world")
+        self.assertEqual(mock_run.call_args.kwargs["input"], prompt)
         self.assertIn("Warning: metadata prefix failed", stderr.getvalue())
 
     @patch.object(hook.subprocess, "run")
@@ -262,7 +285,7 @@ class TestMain(unittest.TestCase):
         stderr = StringIO()
 
         with redirect_stderr(stderr):
-            self.assertEqual(self._run_main(json.dumps({"prompt": "hi"})), 0)
+            self.assertEqual(self._run_main(json.dumps({"prompt": _long_prompt()})), 0)
 
         self.assertIn("Warning: pbcopy failed", stderr.getvalue())
 
@@ -272,7 +295,7 @@ class TestMain(unittest.TestCase):
         stderr = StringIO()
 
         with redirect_stderr(stderr):
-            self.assertEqual(self._run_main(json.dumps({"prompt": "hi"})), 0)
+            self.assertEqual(self._run_main(json.dumps({"prompt": _long_prompt()})), 0)
 
         self.assertIn("Warning: pbcopy exited 1: nope", stderr.getvalue())
 

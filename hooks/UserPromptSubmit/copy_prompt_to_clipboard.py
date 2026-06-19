@@ -28,6 +28,7 @@ PBCOPY = "/usr/bin/pbcopy"
 LONG_LINE_CHARS = 400
 MAX_CHARS = 1500
 MAX_LINES = 20
+MIN_PROMPT_CHARS = 200
 SHORT_ID_CHARS = 8
 
 CLAUDE_PASTE_MARKER_RE = re.compile(
@@ -99,6 +100,11 @@ def sanitize_prompt(prompt: str) -> str:
     text = _collapse_size(text)
     text = BLANK_LINES_RE.sub("\n\n", text)
     return text.strip()
+
+
+def _should_copy_prompt(prompt: str) -> bool:
+    """Return whether a prompt is long enough to keep in clipboard history."""
+    return len(prompt.strip()) >= MIN_PROMPT_CHARS
 
 
 def _first_string(data: dict[str, Any], keys: tuple[str, ...]) -> str:
@@ -213,6 +219,9 @@ def build_metadata_prefix(data: dict[str, Any]) -> str:
 
 def format_clipboard_prompt(prompt: str, data: dict[str, Any]) -> str:
     """Sanitize a prompt and prepend compact source metadata."""
+    if not _should_copy_prompt(prompt):
+        return ""
+
     text = sanitize_prompt(prompt)
     if not text:
         return ""
@@ -257,7 +266,7 @@ def main() -> None:
         text = format_clipboard_prompt(prompt, data)
     except Exception as exc:  # noqa: BLE001 - hook must fail open.
         print(f"Warning: metadata prefix failed: {exc}", file=sys.stderr)
-        text = sanitize_prompt(prompt)
+        text = sanitize_prompt(prompt) if _should_copy_prompt(prompt) else ""
     if not text:
         sys.exit(0)
 
