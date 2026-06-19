@@ -179,6 +179,19 @@ class TestMetadataPrefix(unittest.TestCase):
             )
             mock_prefix.assert_not_called()
 
+    def test_format_skips_prompt_short_after_stripping_code_and_paste(self) -> None:
+        prompt = (
+            "review this\n"
+            "[Pasted Content 123,456 chars]\n"
+            "```python\n"
+            f"{'x' * hook.MIN_PROMPT_CHARS}\n"
+            "```"
+        )
+
+        with patch.object(hook, "build_metadata_prefix") as mock_prefix:
+            self.assertEqual(hook.format_clipboard_prompt(prompt, {}), "")
+            mock_prefix.assert_not_called()
+
     def test_format_skips_metadata_when_prompt_is_empty(self) -> None:
         with patch.object(hook, "build_metadata_prefix") as mock_prefix:
             self.assertEqual(hook.format_clipboard_prompt("   \n", {}), "")
@@ -224,6 +237,21 @@ class TestMain(unittest.TestCase):
     @patch.object(hook.subprocess, "run")
     def test_skips_pbcopy_when_prompt_is_short(self, mock_run: MagicMock) -> None:
         prompt = "x" * (hook.MIN_PROMPT_CHARS - 1)
+
+        self.assertEqual(self._run_main(json.dumps({"prompt": prompt})), 0)
+        mock_run.assert_not_called()
+
+    @patch.object(hook.subprocess, "run")
+    def test_skips_pbcopy_when_prompt_is_short_after_sanitize(
+        self, mock_run: MagicMock
+    ) -> None:
+        prompt = (
+            "review this\n"
+            "[Pasted Content 123,456 chars]\n"
+            "```python\n"
+            f"{'x' * hook.MIN_PROMPT_CHARS}\n"
+            "```"
+        )
 
         self.assertEqual(self._run_main(json.dumps({"prompt": prompt})), 0)
         mock_run.assert_not_called()

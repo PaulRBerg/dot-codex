@@ -102,9 +102,9 @@ def sanitize_prompt(prompt: str) -> str:
     return text.strip()
 
 
-def _should_copy_prompt(prompt: str) -> bool:
-    """Return whether a prompt is long enough to keep in clipboard history."""
-    return len(prompt.strip()) >= MIN_PROMPT_CHARS
+def _should_copy_prompt(text: str) -> bool:
+    """Return whether text is long enough to keep in clipboard history."""
+    return len(text.strip()) >= MIN_PROMPT_CHARS
 
 
 def _first_string(data: dict[str, Any], keys: tuple[str, ...]) -> str:
@@ -219,11 +219,8 @@ def build_metadata_prefix(data: dict[str, Any]) -> str:
 
 def format_clipboard_prompt(prompt: str, data: dict[str, Any]) -> str:
     """Sanitize a prompt and prepend compact source metadata."""
-    if not _should_copy_prompt(prompt):
-        return ""
-
     text = sanitize_prompt(prompt)
-    if not text:
+    if not text or not _should_copy_prompt(text):
         return ""
 
     prefix = build_metadata_prefix(data)
@@ -266,7 +263,8 @@ def main() -> None:
         text = format_clipboard_prompt(prompt, data)
     except Exception as exc:  # noqa: BLE001 - hook must fail open.
         print(f"Warning: metadata prefix failed: {exc}", file=sys.stderr)
-        text = sanitize_prompt(prompt) if _should_copy_prompt(prompt) else ""
+        sanitized = sanitize_prompt(prompt)
+        text = sanitized if _should_copy_prompt(sanitized) else ""
     if not text:
         sys.exit(0)
 
