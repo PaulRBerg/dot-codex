@@ -102,9 +102,25 @@ def sanitize_prompt(prompt: str) -> str:
     return text.strip()
 
 
-def _should_copy_prompt(text: str) -> bool:
-    """Return whether text is long enough to keep in clipboard history."""
-    return len(text.strip()) >= MIN_PROMPT_CHARS
+def _strip_pasted_and_code(prompt: str) -> str:
+    """Remove pasted content and code blocks, leaving only typed prose."""
+    text = CLAUDE_PASTE_MARKER_RE.sub("", prompt)
+    text = CODEX_PASTED_CONTENT_RE.sub("", text)
+    text = CODEX_IMAGE_MARKER_RE.sub("", text)
+    text = FENCE_RE.sub("", text)
+    text = UNTERMINATED_FENCE_RE.sub("", text)
+    kept = [line for line in text.split("\n") if len(line) <= LONG_LINE_CHARS]
+    return "\n".join(kept).strip()
+
+
+def _should_copy_prompt(prompt: str) -> bool:
+    """Return whether the typed prose is long enough to keep in history.
+
+    The minimum-length threshold is measured only after pasted content and code
+    blocks are stripped out, so a short message wrapped around a large paste is
+    not kept just because the paste inflates the character count.
+    """
+    return len(_strip_pasted_and_code(prompt)) >= MIN_PROMPT_CHARS
 
 
 def _first_string(data: dict[str, Any], keys: tuple[str, ...]) -> str:
@@ -220,7 +236,7 @@ def build_metadata_prefix(data: dict[str, Any]) -> str:
 def format_clipboard_prompt(prompt: str, data: dict[str, Any]) -> str:
     """Sanitize a prompt and prepend compact source metadata."""
     text = sanitize_prompt(prompt)
-    if not text or not _should_copy_prompt(text):
+    if not text or not _should_copy_prompt(prompt):
         return ""
 
     prefix = build_metadata_prefix(data)
@@ -264,7 +280,7 @@ def main() -> None:
     except Exception as exc:  # noqa: BLE001 - hook must fail open.
         print(f"Warning: metadata prefix failed: {exc}", file=sys.stderr)
         sanitized = sanitize_prompt(prompt)
-        text = sanitized if _should_copy_prompt(sanitized) else ""
+        text = sanitized if _should_copy_prompt(prompt) else ""
     if not text:
         sys.exit(0)
 
