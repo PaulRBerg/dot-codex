@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 /Users/prb/.codex/hooks/UserPromptSubmit/copy_prompt_to_clipboard.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

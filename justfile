@@ -27,3 +27,10 @@ python3 := require("python3")
     just flatten
     cat context/AGENTS_EXTRA.md >> AGENTS.md
 alias b := build
+
+# Run hook unit tests.
+@test-hooks:
+    {{ python3 }} -m unittest hooks/UserPromptSubmit/copy_prompt_to_clipboard_test.py
+
+# Run all tests.
+@test: test-hooks

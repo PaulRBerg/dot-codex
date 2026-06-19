@@ -25,3 +25,12 @@ installation_id
 models_cache.json
 session_index.jsonl
 version.json
+
+# tracked hooks
+!hooks/
+!hooks/**
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+hooks/**/.debug.jsonl
