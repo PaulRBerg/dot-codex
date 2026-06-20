@@ -46,6 +46,7 @@ web_search = "live"
   browser_use = false
   browser_use_external = false
   computer_use = false
+  default_mode_request_user_input = true
   in_app_browser = false
   multi_agent = true
   plugins = false
