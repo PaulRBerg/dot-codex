@@ -58,21 +58,8 @@ web_search = "live"
 #                                 MCP Servers                                  #
 # ---------------------------------------------------------------------------- #
 [mcp_servers.chrome-devtools]
-  args = [
-    "-y",
-    "chrome-devtools-mcp@latest",
-    "--autoConnect",
-    "--experimental-page-id-routing",
-    "--experimental-memory",
-    "--experimental-vision",
-    "--experimental-structured-content",
-    "--experimental-screencast",
-    "--experimental-ffmpeg-path=/opt/homebrew/bin/ffmpeg",
-    "--redact-network-headers",
-    "--no-performance-crux",
-    "--no-usage-statistics",
-  ]
-  command = "bunx"
+  args = []
+  command = "/Users/prb/.local/bin/prb-chrome-devtools-mcp"
 
 [mcp_servers.filesystem]
   args = ["-y", "@modelcontextprotocol/server-filesystem", "/Users"]
