@@ -50,6 +50,14 @@ BLANK_LINES_RE = re.compile(r"\n{3,}")
 METADATA_VALUE_RE = re.compile(r"[^A-Za-z0-9._/@:-]+")
 UUID_RE = re.compile(r"\b([0-9a-fA-F]{8})-[0-9a-fA-F-]{8,}\b")
 GIT_REMOTE_PATH_RE = re.compile(r"[:/]([^/:]+?)(?:\.git)?/?$")
+SUBAGENT_NOTIFICATION_RE = re.compile(r"^\s*<subagent_notification\b", re.IGNORECASE)
+SUBAGENT_CONTROL_PROMPT_RE = re.compile(
+    r"^\s*(?:please\s+)?(?:stop|interrupt|pause|cancel|halt)\b"
+    r"(?=.*\b(?:return|report|summarize|give)\b)"
+    r"(?=.*\b(?:current|findings|results|sources)\b)"
+    r"(?=.*\bno edits\b)",
+    re.IGNORECASE | re.DOTALL,
+)
 
 CWD_KEYS = (
     "cwd",
@@ -70,6 +78,42 @@ THREAD_ID_KEYS = (
     "conversationId",
 )
 NESTED_METADATA_KEYS = ("thread", "session", "conversation", "turn", "workspace")
+PROMPT_SOURCE_KEYS = (
+    "actor",
+    "author",
+    "event_source",
+    "eventSource",
+    "origin",
+    "originator",
+    "prompt_kind",
+    "promptKind",
+    "prompt_source",
+    "promptSource",
+    "role",
+    "sender",
+    "session_kind",
+    "sessionKind",
+    "source",
+    "thread_source",
+    "threadSource",
+)
+NESTED_SOURCE_KEYS = (*NESTED_METADATA_KEYS, "message", "metadata")
+NON_HUMAN_SOURCE_VALUES = {
+    "agent",
+    "assistant",
+    "codex-agent",
+    "delegated_subagent",
+    "developer",
+    "internal",
+    "multi_agent",
+    "multi_agent_v1",
+    "multi_agent_v2",
+    "subagent",
+    "system",
+    "tool",
+    "worker",
+}
+NON_HUMAN_SOURCE_PARTS = ("multi_agent", "subagent", "delegated_subagent")
 
 
 def _collapse_size(text: str) -> str:
@@ -121,6 +165,46 @@ def _should_copy_prompt(prompt: str) -> bool:
     not kept just because the paste inflates the character count.
     """
     return len(_strip_pasted_and_code(prompt)) >= MIN_PROMPT_CHARS
+
+
+def _metadata_strings(data: dict[str, Any], keys: tuple[str, ...]) -> list[str]:
+    """Return non-empty string metadata values at top level or one level deep."""
+    values = []
+    for key in keys:
+        value = data.get(key)
+        if isinstance(value, str) and value.strip():
+            values.append(value.strip())
+
+    for parent_key in NESTED_SOURCE_KEYS:
+        parent = data.get(parent_key)
+        if not isinstance(parent, dict):
+            continue
+        for key in keys:
+            value = parent.get(key)
+            if isinstance(value, str) and value.strip():
+                values.append(value.strip())
+
+    return values
+
+
+def _has_non_human_source(data: dict[str, Any]) -> bool:
+    """Return whether hook metadata identifies an internal/agent prompt source."""
+    for value in _metadata_strings(data, PROMPT_SOURCE_KEYS):
+        normalized = _safe_metadata_value(value, 64).lower()
+        if normalized in NON_HUMAN_SOURCE_VALUES:
+            return True
+        if any(part in normalized for part in NON_HUMAN_SOURCE_PARTS):
+            return True
+    return False
+
+
+def _should_skip_prompt_event(prompt: str, data: dict[str, Any]) -> bool:
+    """Return whether this prompt event is internal rather than user-authored."""
+    if _has_non_human_source(data):
+        return True
+    if SUBAGENT_NOTIFICATION_RE.match(prompt):
+        return True
+    return bool(SUBAGENT_CONTROL_PROMPT_RE.match(prompt))
 
 
 def _first_string(data: dict[str, Any], keys: tuple[str, ...]) -> str:
@@ -235,6 +319,9 @@ def build_metadata_prefix(data: dict[str, Any]) -> str:
 
 def format_clipboard_prompt(prompt: str, data: dict[str, Any]) -> str:
     """Sanitize a prompt and prepend compact source metadata."""
+    if _should_skip_prompt_event(prompt, data):
+        return ""
+
     text = sanitize_prompt(prompt)
     if not text or not _should_copy_prompt(prompt):
         return ""
@@ -273,6 +360,8 @@ def main() -> None:
 
     prompt = data.get("prompt", "")
     if not isinstance(prompt, str):
+        sys.exit(0)
+    if _should_skip_prompt_event(prompt, data):
         sys.exit(0)
 
     try:

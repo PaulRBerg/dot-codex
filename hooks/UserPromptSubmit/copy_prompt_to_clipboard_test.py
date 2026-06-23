@@ -197,6 +197,54 @@ class TestMetadataPrefix(unittest.TestCase):
             self.assertEqual(hook.format_clipboard_prompt("   \n", {}), "")
             mock_prefix.assert_not_called()
 
+    def test_format_skips_non_human_source_metadata(self) -> None:
+        prompt = _long_prompt()
+
+        with patch.object(hook, "build_metadata_prefix") as mock_prefix:
+            self.assertEqual(
+                hook.format_clipboard_prompt(prompt, {"role": "assistant"}),
+                "",
+            )
+            self.assertEqual(
+                hook.format_clipboard_prompt(prompt, {"message": {"source": "subagent"}}),
+                "",
+            )
+            mock_prefix.assert_not_called()
+
+    def test_format_keeps_codex_product_source_metadata(self) -> None:
+        prompt = _long_prompt()
+
+        with patch.object(hook, "build_metadata_prefix", return_value=""):
+            self.assertEqual(
+                hook.format_clipboard_prompt(prompt, {"source": "codex"}),
+                prompt,
+            )
+
+    def test_format_skips_subagent_notification(self) -> None:
+        prompt = (
+            "<subagent_notification>\n"
+            '{"status":{"completed":"'
+            + ("x" * hook.MIN_PROMPT_CHARS)
+            + '"}}\n'
+            "</subagent_notification>"
+        )
+
+        with patch.object(hook, "build_metadata_prefix") as mock_prefix:
+            self.assertEqual(hook.format_clipboard_prompt(prompt, {}), "")
+            mock_prefix.assert_not_called()
+
+    def test_format_skips_subagent_control_prompt(self) -> None:
+        prompt = (
+            "Please stop the broad hunt and return your best current "
+            "UTXO-style findings now. If no BTC/LTC/DASH/DOGE/BCH/ZEC "
+            "addresses meet the high-activity + strong ShapeShift-control "
+            "bar, say that clearly with the best sources checked. No edits."
+        )
+
+        with patch.object(hook, "build_metadata_prefix") as mock_prefix:
+            self.assertEqual(hook.format_clipboard_prompt(prompt, {}), "")
+            mock_prefix.assert_not_called()
+
 
 class TestMain(unittest.TestCase):
     def _run_main(self, raw: str) -> Any:
@@ -269,6 +317,28 @@ class TestMain(unittest.TestCase):
     @patch.object(hook.subprocess, "run")
     def test_skips_pbcopy_when_prompt_is_not_string(self, mock_run: MagicMock) -> None:
         self.assertEqual(self._run_main(json.dumps({"prompt": 123})), 0)
+        mock_run.assert_not_called()
+
+    @patch.object(hook.subprocess, "run")
+    def test_skips_pbcopy_for_non_human_source(self, mock_run: MagicMock) -> None:
+        self.assertEqual(
+            self._run_main(json.dumps({"prompt": _long_prompt(), "actor": "agent"})),
+            0,
+        )
+        mock_run.assert_not_called()
+
+    @patch.object(hook.subprocess, "run")
+    def test_skips_pbcopy_for_subagent_control_prompt(
+        self, mock_run: MagicMock
+    ) -> None:
+        prompt = (
+            "Please stop the broad hunt and return your best current "
+            "UTXO-style findings now. If no BTC/LTC/DASH/DOGE/BCH/ZEC "
+            "addresses meet the high-activity + strong ShapeShift-control "
+            "bar, say that clearly with the best sources checked. No edits."
+        )
+
+        self.assertEqual(self._run_main(json.dumps({"prompt": prompt})), 0)
         mock_run.assert_not_called()
 
     @patch.object(hook.subprocess, "run")
