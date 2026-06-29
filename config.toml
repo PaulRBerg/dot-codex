@@ -21,8 +21,6 @@ web_search = "live"
 # ---------------------------------------------------------------------------- #
 #                                     Apps                                     #
 # ---------------------------------------------------------------------------- #
-notify = ["/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
-
 [apps._default]
   enabled = false
 
@@ -62,13 +60,13 @@ notify = ["/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/Shared
 # ---------------------------------------------------------------------------- #
 [marketplaces.openai-bundled]
   last_updated = "2026-06-23T09:47:42Z"
-  source_type = "local"
   source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
+  source_type = "local"
 
 [marketplaces.openai-primary-runtime]
   last_updated = "2026-06-23T02:54:57Z"
-  source_type = "local"
   source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+  source_type = "local"
 
 # ---------------------------------------------------------------------------- #
 #                                   Plugins                                    #
@@ -79,20 +77,22 @@ notify = ["/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/Shared
 [plugins."pdf@openai-primary-runtime"]
   enabled = false
 
-[plugins."spreadsheets@openai-primary-runtime"]
+[plugins."presentations@openai-primary-runtime"]
   enabled = false
 
-[plugins."presentations@openai-primary-runtime"]
+[plugins."spreadsheets@openai-primary-runtime"]
   enabled = false
 
 [plugins."template-creator@openai-primary-runtime"]
   enabled = false
 
-# ---------------------------------------------------------------------------- #
-#                                     Hooks                                    #
-# ---------------------------------------------------------------------------- #
+
+  # ---------------------------------------------------------------------------- #
+  #                                     Hooks                                    #
+  # ---------------------------------------------------------------------------- #
+
 [hooks.state."/Users/prb/.codex/hooks.json:user_prompt_submit:0:0"]
-  trusted_hash = "sha256:6d82334f7de344974c6f9373934e1d1921d82e0231438623db840288518bc246"
+  trusted_hash = "sha256:75c87492e44d38dbbb15b264ec50b8f0b165e94d4af0c95869543c0046ae7e47"
 
 # ---------------------------------------------------------------------------- #
 #                                 MCP Servers                                  #
@@ -171,61 +171,70 @@ notify = ["/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/Shared
 # ---------------------------------------------------------------------------- #
 #                                   Projects                                   #
 # ---------------------------------------------------------------------------- #
-[projects."/Users/prb/projects/prb-effect"]
+[projects."/Users/prb/.agents"]
   trust_level = "trusted"
 
-[projects."/Users/prb/sablier/new-ui"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/sablier/backend/indexers"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/sablier/sdk"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/sablier/business/accounting"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/.local/share/chezmoi"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/sablier/backend/services"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/sablier/business/admin-dashboard-ui"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/sablier/files"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/projects/agent-skills"]
+[projects."/Users/prb/.claude"]
   trust_level = "trusted"
 
 [projects."/Users/prb/.codex"]
   trust_level = "trusted"
 
-[projects."/Users/prb/projects/prb-finance"]
+[projects."/Users/prb/.config/nvim"]
   trust_level = "trusted"
 
-[projects."/Users/prb/projects/investescu"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/work/mailops"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/.agents"]
+[projects."/Users/prb/.local/share/chezmoi"]
   trust_level = "trusted"
 
 [projects."/Users/prb/Desktop"]
   trust_level = "trusted"
 
+[projects."/Users/prb/Downloads/big-one"]
+  trust_level = "trusted"
+
 [projects."/Users/prb/pad/neo-blockchain"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/agent-skills"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/crypto-sweeper"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/dormant-wallets"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/evm-sweeper"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/investescu"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/prb-chats"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/prb-effect"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/prb-finance"]
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/prb-math"]
   trust_level = "trusted"
 
-[projects."/Users/prb/sablier/sablier-skills"]
+[projects."/Users/prb/sablier/backend/indexers"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/backend/merkle-api"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/backend/services"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/business/accounting"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/business/admin-dashboard-ui"]
   trust_level = "trusted"
 
 [projects."/Users/prb/sablier/business/investors"]
@@ -234,35 +243,26 @@ notify = ["/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/Shared
 [projects."/Users/prb/sablier/docs"]
   trust_level = "trusted"
 
-[projects."/Users/prb/Downloads/big-one"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/projects/dormant-wallets"]
-  trust_level = "trusted"
-
 [projects."/Users/prb/sablier/evm/monorepo"]
   trust_level = "trusted"
 
-[projects."/Users/prb/projects/prb-chats"]
+[projects."/Users/prb/sablier/files"]
   trust_level = "trusted"
 
-[projects."/Users/prb/work/templates/next-template"]
+[projects."/Users/prb/sablier/new-ui"]
   trust_level = "trusted"
 
-[projects."/Users/prb/.claude"]
+[projects."/Users/prb/sablier/sablier-skills"]
   trust_level = "trusted"
 
-[projects."/Users/prb/projects/evm-sweeper"]
+[projects."/Users/prb/sablier/sdk"]
   trust_level = "trusted"
 
-[projects."/Users/prb/.config/nvim"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/sablier/backend/merkle-api"]
+[projects."/Users/prb/work/mailops"]
   trust_level = "trusted"
 
 [projects."/Users/prb/work/op-workspace"]
   trust_level = "trusted"
 
-[projects."/Users/prb/projects/crypto-sweeper"]
+[projects."/Users/prb/work/templates/next-template"]
   trust_level = "trusted"
