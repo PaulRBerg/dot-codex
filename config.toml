@@ -266,3 +266,6 @@ web_search = "live"
 
 [projects."/Users/prb/work/templates/next-template"]
   trust_level = "trusted"
+
+[projects."/Users/prb/projects/derivation-paths"]
+trust_level = "trusted"
