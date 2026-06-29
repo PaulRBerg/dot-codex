@@ -24,6 +24,6 @@ prefix_rule(
     ],
     not_match = [
         "uv run python script.py",
-        "uv run python3 -m pytest",
+        "uv run python -m pytest",
     ],
 )

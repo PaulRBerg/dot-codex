@@ -8,7 +8,7 @@ set unstable
 #                                 DEPENDENCIES                                 #
 # ---------------------------------------------------------------------------- #
 
-python3 := require("python3")
+uv := require("uv")
 
 # ---------------------------------------------------------------------------- #
 #                                   COMMANDS                                   #
@@ -20,7 +20,7 @@ python3 := require("python3")
 # Run the flatten script; accepts a `files` arg mirroring flatten.py
 [private]
 @flatten files="AGENTS_symlink.md" *args:
-    python3 ~/.codex/helpers/flatten.py {{ files }} {{ args }}
+    {{ uv }} run python ~/.codex/helpers/flatten.py {{ files }} {{ args }}
 
 # Build AGENTS.md by flattening and appending extra context.
 @build:
@@ -30,7 +30,7 @@ alias b := build
 
 # Run hook unit tests.
 @test-hooks:
-    {{ python3 }} -m unittest hooks/UserPromptSubmit/copy_prompt_to_clipboard_test.py
+    {{ uv }} run python -m unittest hooks/UserPromptSubmit/copy_prompt_to_clipboard_test.py
 
 # Run all tests.
 @test: test-hooks

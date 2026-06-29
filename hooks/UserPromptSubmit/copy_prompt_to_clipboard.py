@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run python
 """Copy submitted Codex prompts to the macOS clipboard for Raycast history.
 
 This UserPromptSubmit hook mirrors each prompt into the system clipboard via

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run python
 """
 Flatten @file references in Markdown documents.
 See https://github.com/openai/agents.md/issues/11#issuecomment-3366858928

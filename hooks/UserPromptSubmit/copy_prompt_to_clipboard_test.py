@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run python
 """Unit tests for the Codex prompt clipboard hook."""
 
 import json

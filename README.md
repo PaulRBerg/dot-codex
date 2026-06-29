@@ -7,8 +7,7 @@ Personal `~/.codex` configuration and workflows for the Codex CLI.
 - `AGENTS.md`: canonical agent instructions (generated)
 - `AGENTS_symlink.md`: symlinked source for instructions
 - `context/AGENTS_EXTRA.md`: appended context injected into `AGENTS.md`
-- `config.toml`: local runtime configuration (not checked in)
-- `config-demo.toml`: safe template for `config.toml`
+- `config.toml`: tracked runtime configuration
 - `hooks.json`: tracked global Codex hooks
 - `hooks/`: hook scripts and tests
 - `justfile`: automation for regenerating context
@@ -50,14 +49,6 @@ The hook writes nothing to stdout. Warnings go to stderr and all failures exit 0
 Set `CODEX_CLIP_DEBUG=1` to append raw hook stdin to `hooks/UserPromptSubmit/.debug.jsonl`.
 
 After adding or changing a non-managed hook, open `/hooks` in Codex CLI to review and trust the hook definition.
-
-## Setup
-
-```bash
-cp config-demo.toml config.toml
-```
-
-Edit `config.toml` for your local environment.
 
 ## Related
 

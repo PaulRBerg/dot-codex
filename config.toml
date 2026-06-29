@@ -1,0 +1,268 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+# See:
+#   - https://developers.openai.com/codex/local-config#cli
+#   - https://github.com/openai/codex/blob/main/docs/config.md
+
+# ---------------------------------------------------------------------------- #
+#                                   General                                    #
+# ---------------------------------------------------------------------------- #
+
+approval_policy = "never"
+check_for_update_on_startup = true
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
+personality = "friendly"
+plan_mode_reasoning_effort = "xhigh"
+sandbox_mode = "danger-full-access"
+service_tier = "fast"
+suppress_unstable_features_warning = true
+web_search = "live"
+
+# ---------------------------------------------------------------------------- #
+#                                     Apps                                     #
+# ---------------------------------------------------------------------------- #
+notify = ["/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+
+[apps._default]
+  enabled = false
+
+# ---------------------------------------------------------------------------- #
+#                                    Desktop                                   #
+# ---------------------------------------------------------------------------- #
+[desktop]
+  composerEnterBehavior = "enter"
+  followUpQueueMode = "steer"
+  keepRemoteControlAwakeWhilePluggedIn = true
+  notifications-permissions-enabled = false
+  notifications-turn-mode = "unfocused"
+  preventSleepWhileRunning = true
+  usePointerCursors = true
+
+[desktop.open-in-target-preferences]
+  global = "cursor"
+
+# ---------------------------------------------------------------------------- #
+#                                   Features                                   #
+# ---------------------------------------------------------------------------- #
+[features]
+  apps = false
+  browser_use = false
+  browser_use_external = false
+  computer_use = false
+  default_mode_request_user_input = true
+  in_app_browser = false
+  multi_agent = true
+  plugins = false
+  remote_compaction_v2 = true
+  shell_snapshot = true
+  unified_exec = true
+
+# ---------------------------------------------------------------------------- #
+#                                 Marketplaces                                 #
+# ---------------------------------------------------------------------------- #
+[marketplaces.openai-bundled]
+  last_updated = "2026-06-23T09:47:42Z"
+  source_type = "local"
+  source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+  last_updated = "2026-06-23T02:54:57Z"
+  source_type = "local"
+  source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+# ---------------------------------------------------------------------------- #
+#                                   Plugins                                    #
+# ---------------------------------------------------------------------------- #
+[plugins."documents@openai-primary-runtime"]
+  enabled = false
+
+[plugins."pdf@openai-primary-runtime"]
+  enabled = false
+
+[plugins."spreadsheets@openai-primary-runtime"]
+  enabled = false
+
+[plugins."presentations@openai-primary-runtime"]
+  enabled = false
+
+[plugins."template-creator@openai-primary-runtime"]
+  enabled = false
+
+# ---------------------------------------------------------------------------- #
+#                                     Hooks                                    #
+# ---------------------------------------------------------------------------- #
+[hooks.state."/Users/prb/.codex/hooks.json:user_prompt_submit:0:0"]
+  trusted_hash = "sha256:6d82334f7de344974c6f9373934e1d1921d82e0231438623db840288518bc246"
+
+# ---------------------------------------------------------------------------- #
+#                                 MCP Servers                                  #
+# ---------------------------------------------------------------------------- #
+[mcp_servers.chrome-devtools]
+  args = []
+  command = "/Users/prb/.local/bin/prb-chrome-devtools-mcp"
+
+[mcp_servers.openaiDeveloperDocs]
+  url = "https://developers.openai.com/mcp"
+
+[mcp_servers.serena]
+  args = ["start-mcp-server", "--project-from-cwd", "--context=codex"]
+  command = "/Users/prb/.local/bin/serena"
+  startup_timeout_sec = 15
+
+# ---------------------------------------------------------------------------- #
+#                                    Notice                                    #
+# ---------------------------------------------------------------------------- #
+[notice]
+  fast_default_opt_out = true
+  hide_rate_limit_model_nudge = true
+
+# ---------------------------------------------------------------------------- #
+#                              Shell Environment                               #
+# ---------------------------------------------------------------------------- #
+[shell_environment_policy]
+  experimental_use_profile = true
+  ignore_default_excludes = true
+  inherit = "all"
+
+# ---------------------------------------------------------------------------- #
+#                                    Skills                                    #
+# ---------------------------------------------------------------------------- #
+[[skills.config]]
+  enabled = false
+  path = "/Users/prb/.codex/skills/.system/imagegen/SKILL.md"
+
+[[skills.config]]
+  enabled = false
+  path = "/Users/prb/.codex/skills/.system/plugin-creator/SKILL.md"
+
+[[skills.config]]
+  enabled = false
+  path = "/Users/prb/.codex/skills/.system/skill-creator/SKILL.md"
+
+[[skills.config]]
+  enabled = false
+  path = "/Users/prb/.codex/skills/.system/skill-installer/SKILL.md"
+
+
+# ---------------------------------------------------------------------------- #
+#                                      TUI                                     #
+# ---------------------------------------------------------------------------- #
+[tui]
+  show_tooltips = false
+  status_line = [
+    "model-with-reasoning",
+    "git-branch",
+    "context-used",
+    "used-tokens",
+  ]
+  status_line_use_colors = true
+  theme = "gruvbox-dark"
+
+[tui.keymap.global]
+  toggle_fast_mode = "alt-f"
+
+# `alt-f` defaults to word-right in the composer; keep that action on arrows.
+[tui.keymap.editor]
+  move_word_right = ["alt-right", "ctrl-right"]
+
+[tui.model_availability_nux]
+  "gpt-5.5" = 4
+
+# ---------------------------------------------------------------------------- #
+#                                   Projects                                   #
+# ---------------------------------------------------------------------------- #
+[projects."/Users/prb/projects/prb-effect"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/new-ui"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/backend/indexers"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/sdk"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/business/accounting"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/.local/share/chezmoi"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/backend/services"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/business/admin-dashboard-ui"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/files"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/agent-skills"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/.codex"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/prb-finance"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/investescu"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/work/mailops"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/.agents"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/Desktop"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/pad/neo-blockchain"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/prb-math"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/sablier-skills"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/business/investors"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/docs"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/Downloads/big-one"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/dormant-wallets"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/evm/monorepo"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/prb-chats"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/work/templates/next-template"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/.claude"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/evm-sweeper"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/.config/nvim"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/backend/merkle-api"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/work/op-workspace"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/crypto-sweeper"]
+  trust_level = "trusted"

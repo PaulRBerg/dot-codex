@@ -19,7 +19,6 @@ vendor_imports/
 .codex-global-state.json
 .personality_migration
 auth.json
-config.toml
 history.jsonl
 installation_id
 models_cache.json
