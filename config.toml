@@ -269,3 +269,9 @@ web_search = "live"
 
 [projects."/Users/prb/projects/derivation-paths"]
 trust_level = "trusted"
+
+[projects."/Users/prb/sablier/devkit"]
+trust_level = "trusted"
+
+[projects."/Users/prb/projects/ai-notify"]
+trust_level = "trusted"
