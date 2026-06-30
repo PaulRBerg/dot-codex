@@ -275,3 +275,6 @@ trust_level = "trusted"
 
 [projects."/Users/prb/projects/ai-notify"]
 trust_level = "trusted"
+
+[projects."/Users/prb/projects/token-registry"]
+trust_level = "trusted"
