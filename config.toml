@@ -99,7 +99,7 @@ web_search = "live"
 # ---------------------------------------------------------------------------- #
 [mcp_servers.chrome-devtools]
   args = []
-  command = "/Users/prb/.local/bin/prb-chrome-devtools-mcp"
+  command = "/Users/prb/.local/bin/prb_chrome_devtools_mcp"
 
 [mcp_servers.openaiDeveloperDocs]
   url = "https://developers.openai.com/mcp"
