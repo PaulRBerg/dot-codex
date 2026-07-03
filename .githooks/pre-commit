@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+set -e
+
+if git diff --cached --quiet --exit-code -- .; then
+  exit 0
+fi
+
+just gitleaks-staged
