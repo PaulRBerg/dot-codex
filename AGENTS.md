@@ -110,6 +110,10 @@ I manage my dotfiles with [chezmoi](https://chezmoi.io); the source tree lives a
 ## Plan Mode
 
 - When the user asks for a plan in Plan mode, and the task is relatively simple or decomposes into relatively simple subtasks, include a Codex Spark delegation section identifying work that can be handled by Codex Spark subagents to save Codex credits.
+- A plan's Codex Spark delegation section is only a candidate list. Spark usage counts only when implementation actually spawns a subagent with the Spark model.
+- To spawn a Spark subagent, call the subagent tool with `model: "gpt-5.3-codex-spark"`; otherwise spawned agents inherit the parent model, which is usually full Codex.
+- Use Spark subagents only for independent, low-risk, text-only, read-heavy, or surgical tasks where latency matters more than capability. Use full Codex for ambiguous design, broad edits, integration, browser/computer/image work, high-context debugging, and final verification.
+- In Spark delegation sections, name the candidate role, scope, expected output, and whether implementation should spawn it with `model: "gpt-5.3-codex-spark"`.
 - Keep delegation scoped to independent, low-risk subtasks; reserve main Codex for coordination, integration, and final verification.
 
 ## Codex
