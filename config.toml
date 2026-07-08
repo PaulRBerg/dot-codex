@@ -284,3 +284,9 @@ web_search = "live"
 
 [projects."/Users/prb/sablier/blog"]
   trust_level = "trusted"
+
+[projects."/Users/prb/sablier/legacy-subgraph"]
+trust_level = "trusted"
+
+[projects."/Users/prb/projects/devkit"]
+trust_level = "trusted"
