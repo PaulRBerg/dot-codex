@@ -21,6 +21,7 @@ web_search = "live"
 # ---------------------------------------------------------------------------- #
 #                                     Apps                                     #
 # ---------------------------------------------------------------------------- #
+
 [apps._default]
   enabled = false
 
@@ -56,19 +57,6 @@ web_search = "live"
   unified_exec = true
 
 # ---------------------------------------------------------------------------- #
-#                                 Marketplaces                                 #
-# ---------------------------------------------------------------------------- #
-[marketplaces.openai-bundled]
-  last_updated = "2026-06-23T09:47:42Z"
-  source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
-  source_type = "local"
-
-[marketplaces.openai-primary-runtime]
-  last_updated = "2026-06-23T02:54:57Z"
-  source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
-  source_type = "local"
-
-# ---------------------------------------------------------------------------- #
 #                                   Plugins                                    #
 # ---------------------------------------------------------------------------- #
 [plugins."documents@openai-primary-runtime"]
@@ -87,12 +75,24 @@ web_search = "live"
   enabled = false
 
 
-  # ---------------------------------------------------------------------------- #
-  #                                     Hooks                                    #
-  # ---------------------------------------------------------------------------- #
-
+# ---------------------------------------------------------------------------- #
+#                                     Hooks                                    #
+# ---------------------------------------------------------------------------- #
 [hooks.state."/Users/prb/.codex/hooks.json:user_prompt_submit:0:0"]
   trusted_hash = "sha256:75c87492e44d38dbbb15b264ec50b8f0b165e94d4af0c95869543c0046ae7e47"
+
+# ---------------------------------------------------------------------------- #
+#                                 Marketplaces                                 #
+# ---------------------------------------------------------------------------- #
+[marketplaces.openai-bundled]
+  last_updated = "2026-07-05T17:56:05Z"
+  source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
+  source_type = "local"
+
+[marketplaces.openai-primary-runtime]
+  last_updated = "2026-07-05T18:50:05Z"
+  source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+  source_type = "local"
 
 # ---------------------------------------------------------------------------- #
 #                                 MCP Servers                                  #
@@ -268,13 +268,19 @@ web_search = "live"
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/derivation-paths"]
-trust_level = "trusted"
+  trust_level = "trusted"
 
 [projects."/Users/prb/sablier/devkit"]
-trust_level = "trusted"
+  trust_level = "trusted"
 
 [projects."/Users/prb/projects/ai-notify"]
-trust_level = "trusted"
+  trust_level = "trusted"
 
-[projects."/Users/prb/projects/token-registry"]
-trust_level = "trusted"
+[projects."/Users/prb/projects/crypto-registry"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/Library/Mobile Documents/iCloud~md~obsidian/Documents"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/sablier/blog"]
+  trust_level = "trusted"

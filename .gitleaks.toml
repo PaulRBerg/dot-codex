@@ -1,13 +1,13 @@
 title = "dot-codex gitleaks configuration"
 
 [extend]
-useDefault = true
+  useDefault = true
 
 [[allowlists]]
-description = "Historical Playwright MCP extension token was removed from config.toml."
-targetRules = ["generic-api-key"]
-condition = "AND"
-regexTarget = "line"
-regexes = ['''PLAYWRIGHT_MCP_EXTENSION_TOKEN''']
-paths = ['''^config\.toml$''']
-commits = ["6169364ea4648ddbf7f4fc51258a199d91c85937"]
+  commits = ["6169364ea4648ddbf7f4fc51258a199d91c85937"]
+  condition = "AND"
+  description = "Historical Playwright MCP extension token was removed from config.toml."
+  paths = ['''^config\.toml$''']
+  regexTarget = "line"
+  regexes = ['''PLAYWRIGHT_MCP_EXTENSION_TOKEN''']
+  targetRules = ["generic-api-key"]
