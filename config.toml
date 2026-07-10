@@ -11,7 +11,7 @@ approval_policy = "never"
 check_for_update_on_startup = true
 model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
-personality = "pragmatic"
+personality = "friendly"
 plan_mode_reasoning_effort = "xhigh"
 sandbox_mode = "danger-full-access"
 service_tier = "default"
@@ -245,9 +245,6 @@ web_search = "live"
 [projects."/Users/prb/work/templates/next-template"]
   trust_level = "trusted"
 
-[projects."/Users/prb/projects/derivation-paths"]
-  trust_level = "trusted"
-
 [projects."/Users/prb/sablier/devkit"]
   trust_level = "trusted"
 
@@ -267,4 +264,7 @@ web_search = "live"
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/devkit"]
+  trust_level = "trusted"
+
+[projects."/private/tmp/claude-501/-Users-prb-projects-agent-skills/a47f69d4-eda2-441b-abaf-d17dc0958793/scratchpad/codex-smoke"]
   trust_level = "trusted"
