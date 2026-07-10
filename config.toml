@@ -10,7 +10,11 @@
 approval_policy = "never"
 check_for_update_on_startup = true
 model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+model_reasoning_effort = "low"
+notify = [
+  "/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient",
+  "turn-ended",
+]
 personality = "friendly"
 plan_mode_reasoning_effort = "xhigh"
 sandbox_mode = "danger-full-access"
@@ -30,10 +34,11 @@ web_search = "live"
 # ---------------------------------------------------------------------------- #
 [desktop]
   composerEnterBehavior = "enter"
+  dock-icon-preference = "codex-system"
   followUpQueueMode = "steer"
   keepRemoteControlAwakeWhilePluggedIn = true
   notifications-permissions-enabled = false
-  notifications-turn-mode = "unfocused"
+  notifications-turn-mode = "off"
   preventSleepWhileRunning = true
   usePointerCursors = true
 
@@ -69,7 +74,7 @@ web_search = "live"
 #                                 Marketplaces                                 #
 # ---------------------------------------------------------------------------- #
 [marketplaces.openai-bundled]
-  last_updated = "2026-07-05T17:56:05Z"
+  last_updated = "2026-07-10T19:17:50Z"
   source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
   source_type = "local"
 
@@ -179,9 +184,6 @@ web_search = "live"
 [projects."/Users/prb/Downloads/big-one"]
   trust_level = "trusted"
 
-[projects."/Users/prb/pad/neo-blockchain"]
-  trust_level = "trusted"
-
 [projects."/Users/prb/projects/agent-skills"]
   trust_level = "trusted"
 
@@ -266,5 +268,23 @@ web_search = "live"
 [projects."/Users/prb/projects/devkit"]
   trust_level = "trusted"
 
-[projects."/private/tmp/claude-501/-Users-prb-projects-agent-skills/a47f69d4-eda2-441b-abaf-d17dc0958793/scratchpad/codex-smoke"]
-  trust_level = "trusted"
+# ---------------------------------------------------------------------------- #
+#                                   Plugins                                    #
+# ---------------------------------------------------------------------------- #
+[plugins."documents@openai-primary-runtime"]
+  enabled = false
+
+[plugins."pdf@openai-primary-runtime"]
+  enabled = false
+
+[plugins."presentations@openai-primary-runtime"]
+  enabled = false
+
+[plugins."spreadsheets@openai-primary-runtime"]
+  enabled = false
+
+[plugins."template-creator@openai-primary-runtime"]
+  enabled = false
+
+[plugins."visualize@openai-bundled"]
+  enabled = true
