@@ -1,14 +1,28 @@
 # Global Instructions
 
-You are a senior programmer who values clean code and design patterns.
+Prefer simple, conventional, readable designs. Introduce abstractions or
+patterns only when they reduce overall complexity.
 
 ## Communication
 
-- Be terse. Lead with the answer.
+- Lead with the conclusion. Include the evidence needed for the decision,
+  material caveats, and next action. Trim introductions, repetition, and
+  optional background first.
 - Treat me as an expert — skip the basics.
-- Be creative. Suggest solutions I haven't considered.
+- Surface materially better alternatives or flaws, but do not expand
+  implementation scope without authorization.
 - Challenge assumptions and flag flaws immediately.
-- When uncertain, investigate rather than confirm my beliefs.
+- When facts are discoverable, investigate rather than confirm my beliefs.
+  Otherwise state what is unknown and take the smallest safe next step.
+
+## Authority
+
+- For answers, reviews, diagnosis, and plans: inspect and report; do not change
+  files unless requested.
+- For changes, builds, and fixes: make in-scope local changes and run relevant
+  non-destructive validation.
+- Require confirmation for external writes, destructive actions,
+  credential/permission changes, purchases, or material scope expansion.
 
 ## Agents
 
@@ -27,15 +41,18 @@ You are a senior programmer who values clean code and design patterns.
 
 ## Change Discipline
 
-- State assumptions before implementing. If multiple interpretations would change the implementation or verification strategy, present them and ask.
+- Before implementing, state material assumptions. Ask only when an unresolved
+  choice changes scope, safety, implementation, or verification.
 - Write the minimum code that solves the requested problem: no speculative features, single-use abstractions, unnecessary configurability, or impossible-case error handling.
 - Make surgical changes. Touch only lines that trace to the request or to cleanup caused by your own edits; mention unrelated dead code instead of deleting it.
-- For multi-step tasks, define success criteria and a brief plan with verification for each step. Loop until the criteria are met or the blocker is explicit.
+- For multi-step work, state a brief plan and validation target. Continue until
+  the success criteria are met or the blocker is explicit.
 - Keep files under 1000 lines and test files under 2000.
 
 ## Shell
 
-Despite its name, the Bash tool runs commands under **zsh** (my macOS login shell) — it auto-detects zsh from `~/.zshrc` and ignores `$SHELL`. Don't use bash-only syntax at the top level: zsh raises a parse error ("bad substitution") and aborts the whole command.
+The Bash tool runs commands under **zsh** (my macOS login shell), ignoring
+`$SHELL`. Do not use bash-only syntax at the top level.
 
 - Keep top-level commands POSIX-compatible (zsh-safe).
 - For bash-only features (`declare -A`, `${var^^}`/`${var,,}`, `${!arr[@]}`, `mapfile`, process substitution `<(...)`), wrap them in an explicit `bash` call (Homebrew bash 5.x is on `PATH`):
@@ -47,22 +64,14 @@ echo "${color[sky]} / ${color[sun]^^}"   # blue / YELLOW
 EOF
 ```
 
-The quoted `<<'EOF'` keeps the body out of zsh's parser and runs it in real bash. For longer scripts, write a `#!/usr/bin/env bash` file and execute it.
-
-When passing paths, URLs, or literal patterns with shell-sensitive characters to a CLI, quote or escape each token. In zsh, unquoted `?`, `*`, `[]`, and `()` are glob syntax, so protect Next.js route groups/dynamic segments and URLs with query strings:
-
-```bash
-bat 'src/(shared)/Foo.tsx'
-git diff -- 'src/app/(main)/[id]/page.tsx'
-curl -sS 'https://api.github.com/search/issues?q=repo:openai/codex+zsh&per_page=10'
-rg -F '?' 'src/app/(main)'
-wc -l path/to/my\ file.txt
-```
-
-- Prefer single quotes for literal paths/URLs. Use argv-style APIs or arrays when available; use `noglob` only as a one-command escape hatch.
-- zsh does not word-split scalar strings by default; use arrays or explicit splitting when building argument lists.
-- zsh reserves variable names that bash treats as ordinary. `status` is read-only (it mirrors `$?`), so `status=…`, `local status=…`, and `for status in …` all abort with `zsh: read-only variable: status`. `path` is tied to `$PATH`, so assigning it a plain string silently corrupts `PATH`. Avoid both names (use `rc`, `ret`, `result`) or run the script through an explicit `bash` call.
-- For searching code, prefer your built-in search tool over shelling out — it sidesteps CLI-flag pitfalls. Otherwise prefer modern, structured CLIs: `fd` for finding files, `jq` for JSON, `yq` for YAML/TOML when available, and `uv` for Python entry points.
+- Quote literal paths, URLs, and patterns with single quotes. In zsh, unquoted
+  `?`, `*`, `[]`, and `()` are glob syntax.
+- Use argv-style APIs or arrays when available; use `noglob` only as a
+  one-command escape hatch. zsh does not word-split scalar strings by default.
+- Avoid `status` and `path` as variable names: `status` is read-only and `path`
+  is tied to `$PATH`. Use `rc`, `ret`, or `result`.
+- For code search use `rg`; otherwise prefer `fd`, `jq`, `yq`, and `uv` where
+  appropriate.
 
 ## Gmail / Google Drive
 
@@ -72,20 +81,17 @@ For any request involving my Gmail or Google Drive, consult `~/work/mailops` fir
 
 I manage my dotfiles with chezmoi; the source tree lives at `~/.local/share/chezmoi`.
 
-
 ## Speed Traps
 
 - Verify paths and cwd before commands that assume a location: use `test -e`, `rg --files`, or `fd` instead of guessing.
-- Use single quotes or `rg -F` for shell-sensitive search patterns. Use `rg -P` only when the pattern needs lookaround or
-  other PCRE features.
 - For patch-compatible TSV diffs, use `git diff --no-ext-diff --no-textconv -- <paths>`. Never pipe daff-rendered TSV
   diffs into `git apply`.
 - Before generators or broad scripts, snapshot `git status --short`; afterward inspect only the paths you expected to
   change.
 - Cap private financial CSV/TSV output. Summarize counts and file refs unless raw rows were explicitly requested.
-- Preflight secret, live, or API commands with harmless env checks, and state whether the command writes repo artifacts.
+- Before secret, live, or API commands, run harmless prerequisite checks and
+  identify any local artifacts the command will write.
 
 ## Codex
 
 - `~/.codex/AGENTS.md` is generated from `AGENTS_symlink.md` plus `context/AGENTS_EXTRA.md`. Edit those sources and run `just build`; do not hand-edit the generated file.
-- Ignore unrelated and/or unexpected modified files. Treat such changes as acceptable and proceed without asking how to handle them.
