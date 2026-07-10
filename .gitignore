@@ -5,6 +5,7 @@ cache/
 computer-use/
 generated_images/
 log/
+mcp-oauth-locks/
 packages/
 plugins/
 sessions/

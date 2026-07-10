@@ -10,8 +10,8 @@
 approval_policy = "never"
 check_for_update_on_startup = true
 model = "gpt-5.6-sol"
-model_reasoning_effort = "xhigh"
-personality = "friendly"
+model_reasoning_effort = "high"
+personality = "pragmatic"
 plan_mode_reasoning_effort = "xhigh"
 sandbox_mode = "danger-full-access"
 service_tier = "default"
@@ -51,29 +51,13 @@ web_search = "live"
   default_mode_request_user_input = true
   in_app_browser = false
   multi_agent = true
+  plugin_sharing = false
   plugins = false
   remote_compaction_v2 = true
+  remote_plugin = false
   shell_snapshot = true
+  tool_suggest = false
   unified_exec = true
-
-# ---------------------------------------------------------------------------- #
-#                                   Plugins                                    #
-# ---------------------------------------------------------------------------- #
-[plugins."documents@openai-primary-runtime"]
-  enabled = false
-
-[plugins."pdf@openai-primary-runtime"]
-  enabled = false
-
-[plugins."presentations@openai-primary-runtime"]
-  enabled = false
-
-[plugins."spreadsheets@openai-primary-runtime"]
-  enabled = false
-
-[plugins."template-creator@openai-primary-runtime"]
-  enabled = false
-
 
 # ---------------------------------------------------------------------------- #
 #                                     Hooks                                    #
@@ -133,6 +117,10 @@ web_search = "live"
 
 [[skills.config]]
   enabled = false
+  path = "/Users/prb/.codex/skills/.system/openai-docs/SKILL.md"
+
+[[skills.config]]
+  enabled = false
   path = "/Users/prb/.codex/skills/.system/plugin-creator/SKILL.md"
 
 [[skills.config]]
@@ -142,7 +130,6 @@ web_search = "live"
 [[skills.config]]
   enabled = false
   path = "/Users/prb/.codex/skills/.system/skill-installer/SKILL.md"
-
 
 # ---------------------------------------------------------------------------- #
 #                                      TUI                                     #
@@ -253,9 +240,6 @@ web_search = "live"
   trust_level = "trusted"
 
 [projects."/Users/prb/work/mailops"]
-  trust_level = "trusted"
-
-[projects."/Users/prb/work/op-workspace"]
   trust_level = "trusted"
 
 [projects."/Users/prb/work/templates/next-template"]
