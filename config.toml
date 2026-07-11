@@ -10,7 +10,7 @@
 approval_policy = "never"
 check_for_update_on_startup = true
 model = "gpt-5.6-sol"
-model_reasoning_effort = "low"
+model_reasoning_effort = "high"
 notify = [
   "/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient",
   "turn-ended",
@@ -64,6 +64,11 @@ web_search = "live"
   tool_suggest = false
   unified_exec = true
 
+[features.multi_agent_v2]
+  enabled = true
+  hide_spawn_agent_metadata = false
+  tool_namespace = "agents"
+
 # ---------------------------------------------------------------------------- #
 #                                     Hooks                                    #
 # ---------------------------------------------------------------------------- #
@@ -87,16 +92,12 @@ web_search = "live"
 #                                 MCP Servers                                  #
 # ---------------------------------------------------------------------------- #
 [mcp_servers.chrome-devtools]
-  args = []
   command = "/Users/prb/.local/bin/prb_chrome_devtools_mcp"
-
-[mcp_servers.openaiDeveloperDocs]
-  url = "https://developers.openai.com/mcp"
 
 [mcp_servers.serena]
   args = ["start-mcp-server", "--project-from-cwd", "--context=codex"]
   command = "/Users/prb/.local/bin/serena"
-  startup_timeout_sec = 15
+  startup_timeout_sec = 15.0
 
 # ---------------------------------------------------------------------------- #
 #                                    Notice                                    #
@@ -121,7 +122,7 @@ web_search = "live"
   path = "/Users/prb/.codex/skills/.system/imagegen/SKILL.md"
 
 [[skills.config]]
-  enabled = false
+  enabled = true
   path = "/Users/prb/.codex/skills/.system/openai-docs/SKILL.md"
 
 [[skills.config]]
@@ -159,6 +160,27 @@ web_search = "live"
 
 [tui.model_availability_nux]
   "gpt-5.6-sol" = 4
+
+# ---------------------------------------------------------------------------- #
+#                                   Plugins                                    #
+# ---------------------------------------------------------------------------- #
+[plugins."documents@openai-primary-runtime"]
+  enabled = false
+
+[plugins."pdf@openai-primary-runtime"]
+  enabled = false
+
+[plugins."presentations@openai-primary-runtime"]
+  enabled = false
+
+[plugins."spreadsheets@openai-primary-runtime"]
+  enabled = false
+
+[plugins."template-creator@openai-primary-runtime"]
+  enabled = false
+
+[plugins."visualize@openai-bundled"]
+  enabled = true
 
 # ---------------------------------------------------------------------------- #
 #                                   Projects                                   #
@@ -267,24 +289,3 @@ web_search = "live"
 
 [projects."/Users/prb/projects/devkit"]
   trust_level = "trusted"
-
-# ---------------------------------------------------------------------------- #
-#                                   Plugins                                    #
-# ---------------------------------------------------------------------------- #
-[plugins."documents@openai-primary-runtime"]
-  enabled = false
-
-[plugins."pdf@openai-primary-runtime"]
-  enabled = false
-
-[plugins."presentations@openai-primary-runtime"]
-  enabled = false
-
-[plugins."spreadsheets@openai-primary-runtime"]
-  enabled = false
-
-[plugins."template-creator@openai-primary-runtime"]
-  enabled = false
-
-[plugins."visualize@openai-bundled"]
-  enabled = true
