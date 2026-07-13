@@ -10,7 +10,7 @@
 approval_policy = "never"
 check_for_update_on_startup = true
 model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+model_reasoning_effort = "xhigh"
 notify = [
   "/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient",
   "turn-ended",
@@ -88,15 +88,15 @@ web_search = "live"
   source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
   source_type = "local"
 
-# ---------------------------------------------------------------------------- #
-#                                 MCP Servers                                  #
-# ---------------------------------------------------------------------------- #
 [mcp_servers.chrome-devtools]
-  command = "/Users/prb/.local/bin/prb_chrome_devtools_mcp"
+  command = "/Users/prb/.local/libexec/mcp/chrome-devtools"
+
+[mcp_servers.openaiDeveloperDocs]
+  url = "https://developers.openai.com/mcp"
 
 [mcp_servers.serena]
-  args = ["start-mcp-server", "--project-from-cwd", "--context=codex"]
-  command = "/Users/prb/.local/bin/serena"
+  args = ["--context=codex"]
+  command = "/Users/prb/.local/libexec/mcp/serena"
   startup_timeout_sec = 15.0
 
 # ---------------------------------------------------------------------------- #
@@ -288,4 +288,7 @@ web_search = "live"
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/devkit"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/agent-skills-private"]
   trust_level = "trusted"
