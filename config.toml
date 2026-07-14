@@ -141,6 +141,7 @@ web_search = "live"
 #                                      TUI                                     #
 # ---------------------------------------------------------------------------- #
 [tui]
+  notifications = false
   show_tooltips = false
   status_line = [
     "model-with-reasoning",
