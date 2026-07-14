@@ -10,7 +10,7 @@
 approval_policy = "never"
 check_for_update_on_startup = true
 model = "gpt-5.6-sol"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "medium"
 notify = [
   "/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient",
   "turn-ended",
@@ -292,3 +292,6 @@ web_search = "live"
 
 [projects."/Users/prb/projects/agent-skills-private"]
   trust_level = "trusted"
+
+[projects."/Users/prb/pad/ghostty"]
+trust_level = "trusted"
