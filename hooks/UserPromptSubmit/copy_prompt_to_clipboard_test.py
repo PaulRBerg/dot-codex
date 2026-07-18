@@ -20,6 +20,19 @@ def _long_prompt() -> str:
     return "x" * hook.MIN_PROMPT_CHARS
 
 
+def _task_notification_prompt() -> str:
+    return (
+        "[repo:prb-finance session:3f017750]\n"
+        "<task-notification>\n"
+        "<task-id>bs2qp4eit</task-id>\n"
+        '<summary>Monitor event: "Codex handoff wave 1"</summary>\n'
+        f"<event>{'x' * hook.MIN_PROMPT_CHARS}</event>\n"
+        "If this event is something the user would act on now, send a "
+        "PushNotification. Routine or benign output doesn't need one.\n"
+        "</task-notification>"
+    )
+
+
 class TestSanitizePrompt(unittest.TestCase):
     def test_preserves_normal_prompt(self) -> None:
         self.assertEqual(hook.sanitize_prompt("hello **world**"), "hello **world**")
@@ -233,6 +246,24 @@ class TestMetadataPrefix(unittest.TestCase):
             self.assertEqual(hook.format_clipboard_prompt(prompt, {}), "")
             mock_prefix.assert_not_called()
 
+    def test_format_skips_task_notification_after_provenance(self) -> None:
+        with patch.object(hook, "build_metadata_prefix") as mock_prefix:
+            self.assertEqual(
+                hook.format_clipboard_prompt(_task_notification_prompt(), {}),
+                "",
+            )
+            mock_prefix.assert_not_called()
+
+    def test_format_keeps_user_prompt_that_mentions_task_notification(self) -> None:
+        prompt = (
+            "Fix the clipboard hook so an internal <task-notification> envelope "
+            "is not copied. Keep ordinary user prompts containing that literal "
+            "tag, including this request, and add focused regression coverage."
+        )
+
+        with patch.object(hook, "build_metadata_prefix", return_value=""):
+            self.assertEqual(hook.format_clipboard_prompt(prompt, {}), prompt)
+
     def test_format_skips_subagent_control_prompt(self) -> None:
         prompt = (
             "Please stop the broad hunt and return your best current "
@@ -339,6 +370,14 @@ class TestMain(unittest.TestCase):
         )
 
         self.assertEqual(self._run_main(json.dumps({"prompt": prompt})), 0)
+        mock_run.assert_not_called()
+
+    @patch.object(hook.subprocess, "run")
+    def test_skips_pbcopy_for_task_notification(self, mock_run: MagicMock) -> None:
+        self.assertEqual(
+            self._run_main(json.dumps({"prompt": _task_notification_prompt()})),
+            0,
+        )
         mock_run.assert_not_called()
 
     @patch.object(hook.subprocess, "run")

@@ -50,7 +50,13 @@ BLANK_LINES_RE = re.compile(r"\n{3,}")
 METADATA_VALUE_RE = re.compile(r"[^A-Za-z0-9._/@:-]+")
 UUID_RE = re.compile(r"\b([0-9a-fA-F]{8})-[0-9a-fA-F-]{8,}\b")
 GIT_REMOTE_PATH_RE = re.compile(r"[:/]([^/:]+?)(?:\.git)?/?$")
-SUBAGENT_NOTIFICATION_RE = re.compile(r"^\s*<subagent_notification\b", re.IGNORECASE)
+AGENT_NOTIFICATION_RE = re.compile(
+    r"\A\s*"
+    r"(?:\[(?=[^\]\n]*\brepo:)(?=[^\]\n]*\b(?:session|thread|ref):)"
+    r"[^\]\n]+\]\s*)?"
+    r"<(?:subagent_notification|task-notification)(?=[\s>])",
+    re.IGNORECASE,
+)
 SUBAGENT_CONTROL_PROMPT_RE = re.compile(
     r"^\s*(?:please\s+)?(?:stop|interrupt|pause|cancel|halt)\b"
     r"(?=.*\b(?:return|report|summarize|give)\b)"
@@ -202,7 +208,7 @@ def _should_skip_prompt_event(prompt: str, data: dict[str, Any]) -> bool:
     """Return whether this prompt event is internal rather than user-authored."""
     if _has_non_human_source(data):
         return True
-    if SUBAGENT_NOTIFICATION_RE.match(prompt):
+    if AGENT_NOTIFICATION_RE.match(prompt):
         return True
     return bool(SUBAGENT_CONTROL_PROMPT_RE.match(prompt))
 
