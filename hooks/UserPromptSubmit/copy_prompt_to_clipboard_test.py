@@ -33,6 +33,9 @@ def _task_notification_prompt() -> str:
     )
 
 
+OSC_COLOR_RESPONSE = "\x1b]11;rgb:2f4f/3403/3f33\x1b\\"
+
+
 class TestSanitizePrompt(unittest.TestCase):
     def test_preserves_normal_prompt(self) -> None:
         self.assertEqual(hook.sanitize_prompt("hello **world**"), "hello **world**")
@@ -96,6 +99,11 @@ class TestSanitizePrompt(unittest.TestCase):
 
     def test_squeezes_blank_lines(self) -> None:
         self.assertEqual(hook.sanitize_prompt("a\n\n\n\n\nb"), "a\n\nb")
+
+    def test_strips_terminal_control_traffic(self) -> None:
+        prompt = f"p{OSC_COLOR_RESPONSE}resent\x00 text"
+
+        self.assertEqual(hook.sanitize_prompt(prompt), "present text")
 
     def test_empty_after_sanitize_returns_empty(self) -> None:
         self.assertEqual(hook.sanitize_prompt("   \n\n   "), "")
@@ -254,6 +262,17 @@ class TestMetadataPrefix(unittest.TestCase):
             )
             mock_prefix.assert_not_called()
 
+    def test_format_skips_task_notification_split_by_terminal_response(self) -> None:
+        prompt = _task_notification_prompt().replace(
+            "<task-notification>",
+            f"<task-notifi{OSC_COLOR_RESPONSE}cation>",
+            1,
+        )
+
+        with patch.object(hook, "build_metadata_prefix") as mock_prefix:
+            self.assertEqual(hook.format_clipboard_prompt(prompt, {}), "")
+            mock_prefix.assert_not_called()
+
     def test_format_keeps_user_prompt_that_mentions_task_notification(self) -> None:
         prompt = (
             "Fix the clipboard hook so an internal <task-notification> envelope "
@@ -378,6 +397,20 @@ class TestMain(unittest.TestCase):
             self._run_main(json.dumps({"prompt": _task_notification_prompt()})),
             0,
         )
+        mock_run.assert_not_called()
+
+    @patch.object(hook.subprocess, "run")
+    def test_skips_pbcopy_for_control_corrupted_task_notification(
+        self,
+        mock_run: MagicMock,
+    ) -> None:
+        prompt = _task_notification_prompt().replace(
+            "<task-notification>",
+            f"<task-notifi{OSC_COLOR_RESPONSE}cation>",
+            1,
+        )
+
+        self.assertEqual(self._run_main(json.dumps({"prompt": prompt})), 0)
         mock_run.assert_not_called()
 
     @patch.object(hook.subprocess, "run")

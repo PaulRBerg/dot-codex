@@ -47,6 +47,10 @@ UNTERMINATED_FENCE_RE = re.compile(
     re.MULTILINE | re.DOTALL,
 )
 BLANK_LINES_RE = re.compile(r"\n{3,}")
+TERMINAL_ESCAPE_RE = re.compile(
+    r"\x1b(?:\][^\x07\x1b]*(?:\x07|\x1b\\)|\[[0-?]*[ -/]*[@-~]|[@-_])"
+)
+CONTROL_CHARACTER_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 METADATA_VALUE_RE = re.compile(r"[^A-Za-z0-9._/@:-]+")
 UUID_RE = re.compile(r"\b([0-9a-fA-F]{8})-[0-9a-fA-F-]{8,}\b")
 GIT_REMOTE_PATH_RE = re.compile(r"[:/]([^/:]+?)(?:\.git)?/?$")
@@ -137,9 +141,16 @@ def _collapse_size(text: str) -> str:
     return text
 
 
+def _strip_terminal_controls(text: str) -> str:
+    """Remove terminal responses and control bytes from captured prompt text."""
+    text = TERMINAL_ESCAPE_RE.sub("", text)
+    return CONTROL_CHARACTER_RE.sub("", text)
+
+
 def sanitize_prompt(prompt: str) -> str:
     """Sanitize a submitted prompt for clipboard history."""
-    text = CLAUDE_PASTE_MARKER_RE.sub("Pasted", prompt)
+    text = _strip_terminal_controls(prompt)
+    text = CLAUDE_PASTE_MARKER_RE.sub("Pasted", text)
     text = CODEX_PASTED_CONTENT_RE.sub("Pasted", text)
     text = CODEX_IMAGE_MARKER_RE.sub("Pasted", text)
     text = FENCE_RE.sub("[code]", text)
@@ -154,7 +165,8 @@ def sanitize_prompt(prompt: str) -> str:
 
 def _strip_pasted_and_code(prompt: str) -> str:
     """Remove pasted content and code blocks, leaving only typed prose."""
-    text = CLAUDE_PASTE_MARKER_RE.sub("", prompt)
+    text = _strip_terminal_controls(prompt)
+    text = CLAUDE_PASTE_MARKER_RE.sub("", text)
     text = CODEX_PASTED_CONTENT_RE.sub("", text)
     text = CODEX_IMAGE_MARKER_RE.sub("", text)
     text = FENCE_RE.sub("", text)
@@ -208,7 +220,7 @@ def _should_skip_prompt_event(prompt: str, data: dict[str, Any]) -> bool:
     """Return whether this prompt event is internal rather than user-authored."""
     if _has_non_human_source(data):
         return True
-    if AGENT_NOTIFICATION_RE.match(prompt):
+    if AGENT_NOTIFICATION_RE.match(_strip_terminal_controls(prompt)):
         return True
     return bool(SUBAGENT_CONTROL_PROMPT_RE.match(prompt))
 
