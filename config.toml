@@ -296,3 +296,6 @@ web_search = "live"
 
 [projects."/Users/prb/pad/ghostty"]
 trust_level = "trusted"
+
+[projects."/private/tmp/claude-501/-Users-prb-projects-agent-skills/424162c4-a345-4af9-8f01-a09dfcfb0471/scratchpad/rulestest"]
+trust_level = "trusted"
