@@ -17,6 +17,7 @@ vendor_imports/
 # files
 *.bak
 *.sqlite*
+.sandbox_migration
 .codex-global-state.json
 .personality_migration
 auth.json

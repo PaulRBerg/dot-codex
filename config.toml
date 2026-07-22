@@ -10,17 +10,17 @@
 approval_policy = "never"
 check_for_update_on_startup = true
 model = "gpt-5.6-sol"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "max"
 notify = [
   "/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient",
   "turn-ended",
 ]
 personality = "friendly"
-plan_mode_reasoning_effort = "xhigh"
 sandbox_mode = "danger-full-access"
 service_tier = "default"
 suppress_unstable_features_warning = true
 web_search = "live"
+plan_mode_reasoning_effort = "max"
 
 # ---------------------------------------------------------------------------- #
 #                                     Apps                                     #
@@ -295,7 +295,7 @@ web_search = "live"
   trust_level = "trusted"
 
 [projects."/Users/prb/pad/ghostty"]
-trust_level = "trusted"
+  trust_level = "trusted"
 
 [projects."/private/tmp/claude-501/-Users-prb-projects-agent-skills/424162c4-a345-4af9-8f01-a09dfcfb0471/scratchpad/rulestest"]
-trust_level = "trusted"
+  trust_level = "trusted"
