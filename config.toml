@@ -17,7 +17,7 @@ notify = [
 ]
 personality = "friendly"
 sandbox_mode = "danger-full-access"
-service_tier = "fast"
+service_tier = "default"
 suppress_unstable_features_warning = true
 web_search = "live"
 plan_mode_reasoning_effort = "max"
@@ -41,6 +41,7 @@ plan_mode_reasoning_effort = "max"
   notifications-turn-mode = "off"
   preventSleepWhileRunning = true
   usePointerCursors = true
+mac-menu-bar-enabled = false
 
 [desktop.open-in-target-preferences]
   global = "cursor"
