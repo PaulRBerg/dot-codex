@@ -16,11 +16,11 @@ notify = [
   "turn-ended",
 ]
 personality = "friendly"
+plan_mode_reasoning_effort = "max"
 sandbox_mode = "danger-full-access"
 service_tier = "default"
 suppress_unstable_features_warning = true
 web_search = "live"
-plan_mode_reasoning_effort = "max"
 
 # ---------------------------------------------------------------------------- #
 #                                     Apps                                     #
@@ -37,11 +37,11 @@ plan_mode_reasoning_effort = "max"
   dock-icon-preference = "codex-system"
   followUpQueueMode = "steer"
   keepRemoteControlAwakeWhilePluggedIn = true
+  mac-menu-bar-enabled = false
   notifications-permissions-enabled = false
   notifications-turn-mode = "off"
   preventSleepWhileRunning = true
   usePointerCursors = true
-mac-menu-bar-enabled = false
 
 [desktop.open-in-target-preferences]
   global = "cursor"
@@ -77,14 +77,14 @@ mac-menu-bar-enabled = false
   trusted_hash = "sha256:75c87492e44d38dbbb15b264ec50b8f0b165e94d4af0c95869543c0046ae7e47"
 
 [marketplaces.openai-bundled]
-last_updated = "2026-07-30T09:54:33Z"
-source_type = "local"
-source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
+  last_updated = "2026-07-30T09:54:33Z"
+  source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
+  source_type = "local"
 
 [marketplaces.openai-primary-runtime]
-last_updated = "2026-07-25T10:54:51Z"
-source_type = "local"
-source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+  last_updated = "2026-07-25T10:54:51Z"
+  source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+  source_type = "local"
 
 [mcp_servers.chrome-devtools]
   command = "/Users/prb/.local/libexec/mcp/chrome-devtools"
@@ -182,7 +182,7 @@ source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-
   enabled = true
 
 [plugins."sites@openai-bundled"]
-enabled = true
+  enabled = true
 
 # ---------------------------------------------------------------------------- #
 #                                   Projects                                   #
