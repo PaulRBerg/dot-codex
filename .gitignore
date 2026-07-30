@@ -19,6 +19,7 @@ vendor_imports/
 *.sqlite*
 .sandbox_migration
 .codex-global-state.json
+..codex-global-state.json.tmp-*
 .personality_migration
 auth.json
 history.jsonl
