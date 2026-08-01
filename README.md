@@ -35,6 +35,8 @@ Active hooks:
 
 - `hooks/UserPromptSubmit/copy_prompt_to_clipboard.py`: copies each submitted prompt to the macOS clipboard via
   `/usr/bin/pbcopy` so Raycast clipboard history keeps a searchable prompt log.
+- `hooks/AgentSessionStatus/agent_session_status.py`: maintains a privacy-minimal registry for in-flight Codex turns and
+  combines it with Claude Code's native session inventory.
 
 The clipboard hook sanitizes noisy prompt content before copying:
 
@@ -47,6 +49,19 @@ The clipboard hook sanitizes noisy prompt content before copying:
 The hook writes nothing to stdout. Warnings go to stderr and all failures exit 0 so prompt submission continues.
 
 Set `CODEX_CLIP_DEBUG=1` to append raw hook stdin to `hooks/UserPromptSubmit/.debug.jsonl`.
+
+Report executing Codex and Claude Code sessions machine-wide:
+
+```bash
+~/.codex/hooks/AgentSessionStatus/agent_session_status.py status
+~/.codex/hooks/AgentSessionStatus/agent_session_status.py status --json
+```
+
+The status command includes Codex turns between `UserPromptSubmit` and `Stop`/`SessionEnd`, plus Claude sessions that
+are working or waiting for input. It excludes idle and completed sessions. Codex registry files contain only session and
+turn IDs, cwd, state, timestamps, and a process-lifetime identity; they are written under
+`~/.codex/.tmp/agent-session-status/` with private permissions. Exit `0` means both providers were available, exit `2`
+means the output has partial provider coverage, and exit `64` means invalid command usage.
 
 After adding or changing a non-managed hook, open `/hooks` in Codex CLI to review and trust the hook definition.
 
