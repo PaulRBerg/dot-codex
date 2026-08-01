@@ -14,6 +14,9 @@ SCHEMA_VERSION = 1
 CODEX_SOURCE = "hook-registry"
 CLAUDE_SOURCE = "claude-agents-json"
 LIVE_CODEX_STATE = "in_flight"
+IDLE_CODEX_STATE = "idle"
+LIVE_CODEX_STATES = frozenset({LIVE_CODEX_STATE, IDLE_CODEX_STATE})
+IDLE_TTL_SECONDS = 4 * 3600
 REGISTRY_RELATIVE_PATH = Path(".tmp/agent-session-status")
 HOOK_EVENTS = ("UserPromptSubmit", "Stop", "SessionEnd")
 

@@ -66,7 +66,7 @@ def _provider_failure(
     source: str, error: Exception
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     detail = str(error) or type(error).__name__
-    return {"ok": False, "source": source, "error": detail}, []
+    return {"ok": False, "source": source, "dropped": 0, "error": detail}, []
 
 
 def build_inventory(
@@ -79,7 +79,7 @@ def build_inventory(
     timestamp = now or utc_now()
     try:
         codex_provider, codex_sessions = codex.collect_sessions(
-            home, fingerprint_lookup=fingerprint_lookup
+            home, fingerprint_lookup=fingerprint_lookup, now=timestamp
         )
     except Exception as error:  # noqa: BLE001 - Providers fail independently.
         codex_provider, codex_sessions = _provider_failure(CODEX_SOURCE, error)
@@ -99,6 +99,7 @@ def build_inventory(
         fingerprint_lookup=fingerprint_lookup,
         claude_session_ids=claude_session_ids,
         stderr=stderr,
+        now=timestamp,
     )
     claims = registry.load_claims(storage)
 
@@ -110,6 +111,7 @@ def build_inventory(
             {
                 **session,
                 "label": claim["label"] if claim else None,
+                "paths": claim["paths"] if claim else [],
                 "age_seconds": age_seconds(reference, timestamp),
             }
         )
@@ -122,11 +124,18 @@ def build_inventory(
             row["session_id"],
         )
     )
-    providers = {"codex": codex_provider, "claude": claude_provider}
+    providers = {
+        "codex": {**codex_provider, "dropped": codex_provider.get("dropped", 0)},
+        "claude": {
+            **claude_provider,
+            "dropped": claude_provider.get("dropped", 0),
+        },
+    }
     notes = registry.load_notes(storage, now=timestamp, stderr=stderr)
     return {
         "schema_version": SCHEMA_VERSION,
-        "complete": all(provider["ok"] for provider in providers.values()),
+        "complete": all(provider["ok"] for provider in providers.values())
+        and sum(provider["dropped"] for provider in providers.values()) == 0,
         "providers": providers,
         "sessions": sessions,
         "notes": notes,
@@ -137,13 +146,37 @@ def human_text(value: Any) -> str:
     return json.dumps(str(value), ensure_ascii=False)[1:-1]
 
 
+def _sanitize_detail(value: str) -> str:
+    printable = "".join(char if char.isprintable() else " " for char in value)
+    return " ".join(printable.split())
+
+
+def _cap_detail(value: str, limit: int = 60) -> str:
+    if len(value) > limit:
+        return value[: limit - 1].rstrip() + "…"
+    return value
+
+
 def human_status(document: dict[str, Any]) -> str:
     lines: list[str] = []
     sessions = document["sessions"]
     if sessions:
-        lines.append("CLIENT\tSTATE\tAGE\tNAME/LABEL\tSESSION\tCWD")
+        lines.append("CLIENT\tSTATE\tAGE\tNAME/LABEL\tSESSION\tCWD\tDETAIL")
         for session in sessions:
             label = session.get("label") or session.get("name") or ""
+            details: list[str] = []
+            waiting_for = session.get("waiting_for")
+            if session.get("state") == "waiting" and isinstance(waiting_for, str):
+                sanitized = _sanitize_detail(waiting_for)
+                if sanitized:
+                    details.append(f"waiting={sanitized}")
+            paths = session.get("paths")
+            if isinstance(paths, list) and paths:
+                sanitized_paths = [
+                    _sanitize_detail(spec) for spec in paths if isinstance(spec, str)
+                ]
+                details.append(f"paths={','.join(sanitized_paths)}")
+            detail = _cap_detail(" ".join(details))
             lines.append(
                 "\t".join(
                     (
@@ -153,6 +186,7 @@ def human_status(document: dict[str, Any]) -> str:
                         human_text(label),
                         human_text(session["session_id"]),
                         human_text(session["cwd"]),
+                        human_text(detail),
                     )
                 )
             )
@@ -163,8 +197,11 @@ def human_status(document: dict[str, Any]) -> str:
     failed = []
     for name, provider in document["providers"].items():
         provider_state = "ok" if provider["ok"] else "unavailable"
+        dropped = provider.get("dropped", 0)
+        dropped_detail = f" [{dropped} dropped]" if dropped else ""
         provider_parts.append(
-            f"{human_text(name)}={provider_state} ({human_text(provider['source'])})"
+            f"{human_text(name)}={provider_state} "
+            f"({human_text(provider['source'])}{dropped_detail})"
         )
         if not provider["ok"]:
             failed.append(
@@ -176,10 +213,12 @@ def human_status(document: dict[str, Any]) -> str:
         lines.append(f"WARNING: incomplete provider coverage — {'; '.join(failed)}")
 
     notes = document.get("notes") or {}
+    rendered_notes = False
     for repo_root in sorted(notes):
         entries = notes[repo_root]
         if not entries:
             continue
+        rendered_notes = True
         lines.append(f"Notes ({human_text(repo_root)}):")
         for entry in entries:
             lines.append(
@@ -191,4 +230,6 @@ def human_status(document: dict[str, Any]) -> str:
                     )
                 )
             )
+    if rendered_notes:
+        lines.append("(note --done <id> closes a note)")
     return "\n".join(lines) + "\n"

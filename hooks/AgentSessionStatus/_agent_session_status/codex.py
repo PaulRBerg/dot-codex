@@ -11,6 +11,7 @@ from typing import Any, TextIO
 from ._core import (
     CODEX_SOURCE,
     HOOK_EVENTS,
+    IDLE_CODEX_STATE,
     LIVE_CODEX_STATE,
     SCHEMA_VERSION,
     atomic_write_json,
@@ -56,9 +57,75 @@ def handle_hook_event(
     if not isinstance(session_id, str) or not session_id:
         raise ValueError("missing session_id")
 
-    if event in {"Stop", "SessionEnd"}:
+    timestamp = now or utc_now()
+    if event == "SessionEnd":
         remove_record(registry, session_id)
-        prune_registry(registry, fingerprint_lookup=fingerprint_lookup, stderr=stderr)
+        prune_registry(
+            registry,
+            fingerprint_lookup=fingerprint_lookup,
+            stderr=stderr,
+            now=timestamp,
+        )
+        return
+
+    if event == "Stop":
+        path = record_path(registry, session_id)
+        existing = read_record(path, now=timestamp)
+        existing_matches = (
+            existing is not None
+            and fingerprint_lookup(existing["pid"])
+            == existing["process_start_fingerprint"]
+        )
+        identity = (
+            (existing["pid"], existing["process_start_fingerprint"])
+            if existing_matches
+            else process_identity or codex_process_identity()
+        )
+        raw_turn_id = data.get("turn_id")
+        raw_cwd = data.get("cwd")
+        turn_id = (
+            raw_turn_id
+            if isinstance(raw_turn_id, str) and raw_turn_id
+            else existing["turn_id"] if existing_matches else None
+        )
+        cwd = (
+            raw_cwd
+            if isinstance(raw_cwd, str) and raw_cwd
+            else existing["cwd"] if existing_matches else None
+        )
+        if identity is None or turn_id is None or cwd is None:
+            remove_record(registry, session_id)
+            prune_registry(
+                registry,
+                fingerprint_lookup=fingerprint_lookup,
+                stderr=stderr,
+                now=timestamp,
+            )
+            return
+        pid, fingerprint = identity
+        atomic_write_json(
+            path,
+            {
+                "schema_version": SCHEMA_VERSION,
+                "session_id": session_id,
+                "turn_id": turn_id,
+                "cwd": cwd,
+                "state": IDLE_CODEX_STATE,
+                "started_at": existing["started_at"]
+                if existing_matches
+                else timestamp,
+                "updated_at": timestamp,
+                "pid": pid,
+                "process_start_fingerprint": fingerprint,
+            },
+        )
+        prune_registry(
+            registry,
+            fingerprint_lookup=fingerprint_lookup,
+            stderr=stderr,
+            exclude_path=path,
+            now=timestamp,
+        )
         return
 
     turn_id = data.get("turn_id")
@@ -72,9 +139,8 @@ def handle_hook_event(
     if identity is None:
         raise RuntimeError("could not identify the owning Codex process")
     pid, fingerprint = identity
-    timestamp = now or utc_now()
     path = record_path(registry, session_id)
-    existing = read_record(path)
+    existing = read_record(path, now=timestamp)
     started_at = timestamp
     if (
         existing is not None
@@ -101,6 +167,7 @@ def handle_hook_event(
         fingerprint_lookup=fingerprint_lookup,
         stderr=stderr,
         exclude_path=path,
+        now=timestamp,
     )
 
 
@@ -172,9 +239,10 @@ def collect_sessions(
     codex_home: Path | None = None,
     script_path: Path | None = None,
     fingerprint_lookup: FingerprintLookup = process_start_fingerprint,
+    now: str | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     resolved_home = codex_home or default_codex_home()
-    provider = {"ok": True, "source": CODEX_SOURCE}
+    provider = {"ok": True, "source": CODEX_SOURCE, "dropped": 0}
     registration_error = _registration_error(
         resolved_home, script_path or ENTRYPOINT_PATH
     )
@@ -193,8 +261,12 @@ def collect_sessions(
 
     sessions: list[dict[str, Any]] = []
     invalid_records = 0
-    for path in registry.glob("*.json"):
-        record = read_record(path)
+    try:
+        paths = list(registry.glob("*.json"))
+    except OSError as error:
+        return {**provider, "ok": False, "error": str(error)}, []
+    for path in paths:
+        record = read_record(path, now=now)
         if record is None:
             invalid_records += 1
             continue
@@ -204,7 +276,7 @@ def collect_sessions(
             {
                 "client": "codex",
                 "session_id": record["session_id"],
-                "state": LIVE_CODEX_STATE,
+                "state": record["state"],
                 "cwd": record["cwd"],
                 "pid": record["pid"],
                 "started_at": record["started_at"],
@@ -214,10 +286,4 @@ def collect_sessions(
             }
         )
 
-    if invalid_records:
-        provider = {
-            **provider,
-            "ok": False,
-            "error": f"{invalid_records} invalid registry record(s)",
-        }
-    return provider, sessions
+    return {**provider, "dropped": invalid_records}, sessions
