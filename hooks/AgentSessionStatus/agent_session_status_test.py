@@ -80,8 +80,14 @@ def _complete_document() -> dict:
                 "cwd": "/tmp/project",
                 "pid": 123,
                 "started_at": "2026-08-01T10:00:00.000Z",
+                "updated_at": "2026-08-01T10:00:00.000Z",
+                "name": None,
+                "waiting_for": None,
+                "label": None,
+                "age_seconds": 300,
             }
         ],
+        "notes": {},
     }
 
 
@@ -413,7 +419,7 @@ class TestRegistryLiveness(unittest.TestCase):
 
 
 class TestClaudeNormalization(unittest.TestCase):
-    def test_normalizes_live_states_and_filters_idle_completed(self) -> None:
+    def test_normalizes_live_states_including_idle_and_filters_terminal(self) -> None:
         rows = [
             {
                 "sessionId": "interactive-working",
@@ -441,6 +447,8 @@ class TestClaudeNormalization(unittest.TestCase):
                 "startedAt": 1785580837603,
                 "status": "waiting",
                 "pid": 11,
+                "name": "stale-test-cleanup",
+                "waitingFor": "input",
             },
             {
                 "sessionId": "interactive-idle",
@@ -457,6 +465,13 @@ class TestClaudeNormalization(unittest.TestCase):
                 "status": "waiting",
                 "pid": 13,
             },
+            {
+                "sessionId": "background-stopped",
+                "cwd": "/tmp/g",
+                "startedAt": 1785580837606,
+                "status": "stopped",
+                "pid": 15,
+            },
         ]
 
         sessions, errors = status.normalize_claude_sessions(rows)
@@ -469,9 +484,16 @@ class TestClaudeNormalization(unittest.TestCase):
                 ("interactive-busy", "working"),
                 ("background-blocked", "waiting"),
                 ("interactive-waiting", "waiting"),
+                ("interactive-idle", "idle"),
             ],
         )
         self.assertIsNone(sessions[2]["pid"])
+        waiting_session = sessions[3]
+        self.assertEqual(waiting_session["name"], "stale-test-cleanup")
+        self.assertEqual(waiting_session["waiting_for"], "input")
+        idle_session = sessions[4]
+        self.assertIsNone(idle_session["name"])
+        self.assertIsNone(idle_session["waiting_for"])
 
     def test_live_malformed_row_marks_provider_partial(self) -> None:
         rows = [
@@ -573,8 +595,10 @@ class TestCli(unittest.TestCase):
             return_code = status.run_status(json_output=False, stdout=output)
 
         self.assertEqual(return_code, 0)
-        self.assertIn("CLIENT\tSTATE\tSESSION\tCWD", output.getvalue())
-        self.assertIn("codex\tin_flight\tsession-1\t/tmp/project", output.getvalue())
+        self.assertIn("CLIENT\tSTATE\tAGE\tNAME/LABEL\tSESSION\tCWD", output.getvalue())
+        self.assertIn(
+            "codex\tin_flight\t5m\t\tsession-1\t/tmp/project", output.getvalue()
+        )
         self.assertNotIn("WARNING", output.getvalue())
 
     def test_human_output_escapes_control_characters(self) -> None:
@@ -592,7 +616,7 @@ class TestCli(unittest.TestCase):
         rendered = status._human_status(document)
 
         self.assertIn(
-            "codex\tin_flight\tsession-1\t"
+            "codex\tin_flight\t5m\t\tsession-1\t"
             "/tmp/a\\nclaude\\tworking\\tforged-session\\t/tmp/b",
             rendered,
         )
@@ -627,6 +651,7 @@ class TestCli(unittest.TestCase):
             "started_at": "2026-08-01T10:00:00.000Z",
         }
         with (
+            tempfile.TemporaryDirectory() as temporary,
             patch.object(
                 status,
                 "collect_codex_sessions",
@@ -641,11 +666,15 @@ class TestCli(unittest.TestCase):
                 ),
             ),
         ):
-            document = status.build_inventory()
+            document = status.build_inventory(codex_home=Path(temporary))
 
         self.assertFalse(document["complete"])
         self.assertEqual(document["providers"]["codex"]["error"], "registry unreadable")
-        self.assertEqual(document["sessions"], [claude_session])
+        self.assertEqual(len(document["sessions"]), 1)
+        result_session = document["sessions"][0]
+        self.assertEqual(result_session["session_id"], "claude-1")
+        self.assertEqual(result_session["client"], "claude")
+        self.assertIsNone(result_session["label"])
 
     def test_partial_human_output_visibly_warns(self) -> None:
         output = StringIO()
@@ -672,6 +701,651 @@ class TestCli(unittest.TestCase):
 
         self.assertEqual(return_code, os.EX_USAGE)
         self.assertIn("usage:", stderr.getvalue())
+
+    def test_unknown_verb_returns_ex_usage(self) -> None:
+        stderr = StringIO()
+
+        with redirect_stderr(stderr):
+            return_code = status.main(["bogus"])
+
+        self.assertEqual(return_code, os.EX_USAGE)
+
+    def test_no_arguments_returns_ex_usage(self) -> None:
+        stderr = StringIO()
+
+        with redirect_stderr(stderr):
+            return_code = status.main([])
+
+        self.assertEqual(return_code, os.EX_USAGE)
+
+
+class TestAge(unittest.TestCase):
+    def test_age_seconds_computes_delta(self) -> None:
+        seconds = status._age_seconds(
+            "2026-08-01T10:00:00.000Z", "2026-08-01T10:05:00.000Z"
+        )
+        self.assertEqual(seconds, 300)
+
+    def test_age_seconds_clamps_negative_to_zero(self) -> None:
+        seconds = status._age_seconds(
+            "2026-08-01T10:05:00.000Z", "2026-08-01T10:00:00.000Z"
+        )
+        self.assertEqual(seconds, 0)
+
+    def test_age_seconds_returns_none_for_malformed_timestamp(self) -> None:
+        self.assertIsNone(
+            status._age_seconds("not-a-timestamp", "2026-08-01T10:00:00.000Z")
+        )
+
+    def test_format_age_thresholds(self) -> None:
+        self.assertEqual(status._format_age(None), "")
+        self.assertEqual(status._format_age(45), "45s")
+        self.assertEqual(status._format_age(240), "4m")
+        self.assertEqual(status._format_age(3 * 3600), "3h")
+        self.assertEqual(status._format_age(2 * 24 * 3600), "2d")
+
+
+class TestProcessAncestors(unittest.TestCase):
+    def test_stops_at_pid_one(self) -> None:
+        def ps_value(pid: int, field: str, _timeout_seconds: float) -> str:
+            self.assertEqual(field, "ppid")
+            return str(max(pid - 1, 0))
+
+        chain = status.process_ancestors(3, ps_value=ps_value)
+
+        self.assertEqual(chain, [3, 2])
+
+    def test_bounded_by_timeout(self) -> None:
+        clock = [0.0]
+
+        def monotonic() -> float:
+            clock[0] += 0.2
+            return clock[0]
+
+        def ps_value(pid: int, _field: str, _timeout_seconds: float) -> str:
+            return str(pid - 1)
+
+        with patch.object(status.time, "monotonic", side_effect=monotonic):
+            chain = status.process_ancestors(
+                1000, timeout_seconds=1.0, ps_value=ps_value
+            )
+
+        self.assertLessEqual(len(chain), 16)
+        self.assertTrue(all(pid > 0 for pid in chain))
+
+
+class TestResolveIdentity(unittest.TestCase):
+    def test_empty_ancestor_chain_returns_none(self) -> None:
+        self.assertIsNone(status.resolve_identity(ancestors=[]))
+
+    def test_resolves_codex_session_by_pid(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            home.mkdir()
+            _write_hooks(home, Path(status.__file__).resolve())
+            registry = home / status.REGISTRY_RELATIVE_PATH
+            status.handle_hook_event(
+                _prompt_event("session-1"), registry, process_identity=(555, "fp")
+            )
+
+            def claude_runner(*_args, **_kwargs):
+                return subprocess.CompletedProcess([], 0, "[]", "")
+
+            identity = status.resolve_identity(
+                codex_home=home,
+                fingerprint_lookup=lambda _pid: "fp",
+                claude_runner=claude_runner,
+                ancestors=[999, 555, 1],
+            )
+
+            self.assertEqual(identity, {"client": "codex", "session_id": "session-1"})
+
+    def test_resolves_claude_session_by_pid(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            home.mkdir()
+            _write_hooks(home, Path(status.__file__).resolve())
+            rows = [
+                {
+                    "sessionId": "claude-7",
+                    "cwd": "/tmp/x",
+                    "startedAt": 1785580837601,
+                    "status": "working",
+                    "pid": 777,
+                }
+            ]
+
+            def claude_runner(*_args, **_kwargs):
+                return subprocess.CompletedProcess([], 0, json.dumps(rows), "")
+
+            identity = status.resolve_identity(
+                codex_home=home, claude_runner=claude_runner, ancestors=[888, 777]
+            )
+
+            self.assertEqual(identity, {"client": "claude", "session_id": "claude-7"})
+
+    def test_unresolvable_returns_none(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            home.mkdir()
+            _write_hooks(home, Path(status.__file__).resolve())
+
+            def claude_runner(*_args, **_kwargs):
+                return subprocess.CompletedProcess([], 0, "[]", "")
+
+            identity = status.resolve_identity(
+                codex_home=home, claude_runner=claude_runner, ancestors=[42, 43]
+            )
+
+            self.assertIsNone(identity)
+
+
+class TestIdentityCli(unittest.TestCase):
+    def test_prints_client_and_session(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            stdout = StringIO()
+
+            return_code = status.run_identity(
+                codex_home=home,
+                identity={"client": "codex", "session_id": "session-1"},
+                stdout=stdout,
+            )
+
+            self.assertEqual(return_code, 0)
+            self.assertEqual(stdout.getvalue(), "client=codex session=session-1\n")
+
+    def test_includes_label_when_claim_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            registry = status._registry_dir(home)
+            status.write_claim(
+                registry,
+                session_id="session-1",
+                client="codex",
+                cwd="/tmp/project",
+                label="convert pacing tests",
+            )
+            stdout = StringIO()
+
+            status.run_identity(
+                codex_home=home,
+                identity={"client": "codex", "session_id": "session-1"},
+                stdout=stdout,
+            )
+
+            self.assertEqual(
+                stdout.getvalue(),
+                "client=codex session=session-1 label=convert pacing tests\n",
+            )
+
+    def test_unresolvable_identity_exits_one(self) -> None:
+        stderr = StringIO()
+
+        with patch.object(status, "resolve_identity", return_value=None):
+            return_code = status.run_identity(
+                codex_home=Path("/nonexistent"), stderr=stderr
+            )
+
+        self.assertEqual(return_code, 1)
+        self.assertIn("agent-session-status:", stderr.getvalue())
+
+
+class TestClaimCli(unittest.TestCase):
+    def test_override_writes_sidecar(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+
+            return_code = status.run_claim(
+                "convert pacing tests to TestClock",
+                codex_home=home,
+                client_override="codex",
+                session_override="session-9",
+                cwd="/repo",
+                now="2026-08-01T10:00:00.000Z",
+            )
+
+            self.assertEqual(return_code, 0)
+            claims_dir = status._registry_dir(home) / "claims"
+            files = list(claims_dir.glob("*.json"))
+            self.assertEqual(len(files), 1)
+            self.assertEqual(stat.S_IMODE(files[0].stat().st_mode), 0o600)
+            record = json.loads(files[0].read_text())
+            self.assertEqual(
+                record,
+                {
+                    "schema_version": 1,
+                    "session_id": "session-9",
+                    "client": "codex",
+                    "cwd": "/repo",
+                    "label": "convert pacing tests to TestClock",
+                    "created_at": "2026-08-01T10:00:00.000Z",
+                },
+            )
+
+    def test_uses_injected_identity_when_no_override(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+
+            return_code = status.run_claim(
+                "label",
+                codex_home=home,
+                identity={"client": "claude", "session_id": "claude-1"},
+            )
+
+            self.assertEqual(return_code, 0)
+            claims = status._load_claims(status._registry_dir(home))
+            self.assertIn(("claude", "claude-1"), claims)
+
+    def test_unresolvable_identity_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            stderr = StringIO()
+
+            with patch.object(status, "resolve_identity", return_value=None):
+                return_code = status.run_claim("label", codex_home=home, stderr=stderr)
+
+            self.assertEqual(return_code, 1)
+            self.assertEqual(status._load_claims(status._registry_dir(home)), {})
+
+
+class TestClaimArgParsing(unittest.TestCase):
+    def test_parses_label_only(self) -> None:
+        self.assertEqual(
+            status._parse_claim_args(["do the thing"]), ("do the thing", None, None)
+        )
+
+    def test_parses_override_flags_before_label(self) -> None:
+        parsed = status._parse_claim_args(
+            ["--client", "claude", "--session", "abc", "label text"]
+        )
+        self.assertEqual(parsed, ("label text", "claude", "abc"))
+
+    def test_rejects_missing_label(self) -> None:
+        self.assertIsNone(status._parse_claim_args([]))
+
+    def test_rejects_partial_override(self) -> None:
+        self.assertIsNone(status._parse_claim_args(["--client", "codex", "label"]))
+
+    def test_rejects_invalid_client(self) -> None:
+        self.assertIsNone(
+            status._parse_claim_args(["--client", "bogus", "--session", "x", "label"])
+        )
+
+    def test_rejects_multiple_positionals(self) -> None:
+        self.assertIsNone(status._parse_claim_args(["one", "two"]))
+
+
+class TestClaimPruning(unittest.TestCase):
+    def test_prune_removes_claim_when_codex_session_gone(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+            status.handle_hook_event(
+                _prompt_event("session-1"),
+                registry,
+                process_identity=(123, "fingerprint"),
+            )
+            status.write_claim(
+                registry,
+                session_id="session-1",
+                client="codex",
+                cwd="/tmp/project",
+                label="doing work",
+            )
+
+            status.prune_registry(registry, fingerprint_lookup=lambda _pid: None)
+
+            self.assertEqual(list((registry / "claims").glob("*.json")), [])
+
+    def test_prune_keeps_claim_when_codex_session_alive(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+            status.handle_hook_event(
+                _prompt_event("session-1"),
+                registry,
+                process_identity=(123, "fingerprint"),
+            )
+            status.write_claim(
+                registry,
+                session_id="session-1",
+                client="codex",
+                cwd="/tmp/project",
+                label="doing work",
+            )
+
+            status.prune_registry(
+                registry, fingerprint_lookup=lambda _pid: "fingerprint"
+            )
+
+            self.assertEqual(len(list((registry / "claims").glob("*.json"))), 1)
+
+    def test_prune_leaves_claude_claim_when_liveness_unknown(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+            status.write_claim(
+                registry,
+                session_id="claude-9",
+                client="claude",
+                cwd="/tmp/project",
+                label="doing work",
+            )
+
+            status.prune_registry(registry)
+
+            self.assertEqual(len(list((registry / "claims").glob("*.json"))), 1)
+
+    def test_prune_removes_dead_claude_claim_when_ids_given(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+            status.write_claim(
+                registry,
+                session_id="claude-9",
+                client="claude",
+                cwd="/tmp/project",
+                label="doing work",
+            )
+
+            status.prune_registry(
+                registry, claude_session_ids=frozenset({"claude-other"})
+            )
+
+            self.assertEqual(list((registry / "claims").glob("*.json")), [])
+
+    def test_prune_keeps_live_claude_claim_when_ids_given(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+            status.write_claim(
+                registry,
+                session_id="claude-9",
+                client="claude",
+                cwd="/tmp/project",
+                label="doing work",
+            )
+
+            status.prune_registry(registry, claude_session_ids=frozenset({"claude-9"}))
+
+            self.assertEqual(len(list((registry / "claims").glob("*.json"))), 1)
+
+
+class TestNotes(unittest.TestCase):
+    def test_add_and_load_note(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+
+            entry = status.add_note(
+                registry,
+                "/repo",
+                "finding",
+                session_id="s1",
+                client="codex",
+                now="2026-08-01T10:00:00.000Z",
+            )
+            notes = status.load_notes(registry, now="2026-08-01T10:05:00.000Z")
+
+            self.assertEqual(list(notes.keys()), ["/repo"])
+            self.assertEqual(notes["/repo"][0]["id"], entry["id"])
+            self.assertEqual(notes["/repo"][0]["text"], "finding")
+            self.assertEqual(notes["/repo"][0]["session_id"], "s1")
+            self.assertEqual(notes["/repo"][0]["client"], "codex")
+            self.assertEqual(notes["/repo"][0]["age_seconds"], 300)
+
+    def test_remove_note_by_id(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+            entry = status.add_note(registry, "/repo", "finding")
+
+            removed = status.remove_note(registry, "/repo", entry["id"])
+
+            self.assertTrue(removed)
+            self.assertEqual(status.load_notes(registry), {})
+
+    def test_remove_unknown_note_returns_false(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+            status.add_note(registry, "/repo", "finding")
+
+            self.assertFalse(status.remove_note(registry, "/repo", "deadbeef"))
+
+    def test_notes_expire_after_seven_days(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+            status.add_note(registry, "/repo", "old", now="2026-07-24T10:00:00.000Z")
+            status.add_note(registry, "/repo", "new", now="2026-07-31T10:00:00.000Z")
+
+            notes = status.load_notes(registry, now="2026-08-01T10:00:00.000Z")
+
+            self.assertEqual([entry["text"] for entry in notes["/repo"]], ["new"])
+
+    def test_expired_notes_pruned_from_disk(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+            status.add_note(registry, "/repo", "old", now="2026-07-01T10:00:00.000Z")
+
+            status.load_notes(registry, now="2026-08-01T10:00:00.000Z")
+
+            self.assertEqual(list((registry / "notes").glob("*.json")), [])
+
+
+class TestNoteCli(unittest.TestCase):
+    def test_add_writes_entry_with_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            stdout = StringIO()
+
+            def repo_runner(*_args, **_kwargs):
+                return subprocess.CompletedProcess([], 0, "/repo\n", "")
+
+            return_code = status.run_note(
+                text="finding",
+                done_id=None,
+                codex_home=home,
+                identity={"client": "codex", "session_id": "abc"},
+                repo_runner=repo_runner,
+                stdout=stdout,
+                now="2026-08-01T10:00:00.000Z",
+            )
+
+            self.assertEqual(return_code, 0)
+            note_id = stdout.getvalue().strip()
+            self.assertTrue(note_id)
+            notes = status.load_notes(
+                status._registry_dir(home), now="2026-08-01T10:00:00.000Z"
+            )
+            self.assertEqual(notes["/repo"][0]["session_id"], "abc")
+            self.assertEqual(notes["/repo"][0]["client"], "codex")
+
+    def test_add_falls_back_to_cwd_when_not_a_git_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+
+            def repo_runner(*_args, **_kwargs):
+                return subprocess.CompletedProcess([], 128, "", "not a git repository")
+
+            status.run_note(
+                text="finding",
+                done_id=None,
+                codex_home=home,
+                cwd="/not/a/repo",
+                identity=None,
+                repo_runner=repo_runner,
+                stdout=StringIO(),
+            )
+
+            notes = status.load_notes(status._registry_dir(home))
+            self.assertIn("/not/a/repo", notes)
+
+    def test_done_removes_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+
+            def repo_runner(*_args, **_kwargs):
+                return subprocess.CompletedProcess([], 0, "/repo\n", "")
+
+            add_stdout = StringIO()
+            status.run_note(
+                text="finding",
+                done_id=None,
+                codex_home=home,
+                repo_runner=repo_runner,
+                stdout=add_stdout,
+            )
+            note_id = add_stdout.getvalue().strip()
+
+            return_code = status.run_note(
+                text=None, done_id=note_id, codex_home=home, repo_runner=repo_runner
+            )
+
+            self.assertEqual(return_code, 0)
+            self.assertEqual(status.load_notes(status._registry_dir(home)), {})
+
+    def test_done_missing_id_returns_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            stderr = StringIO()
+
+            def repo_runner(*_args, **_kwargs):
+                return subprocess.CompletedProcess([], 0, "/repo\n", "")
+
+            return_code = status.run_note(
+                text=None,
+                done_id="missing",
+                codex_home=home,
+                repo_runner=repo_runner,
+                stderr=stderr,
+            )
+
+            self.assertEqual(return_code, 1)
+            self.assertIn("agent-session-status:", stderr.getvalue())
+
+
+class TestNoteArgParsing(unittest.TestCase):
+    def test_parses_text(self) -> None:
+        self.assertEqual(status._parse_note_args(["a finding"]), ("a finding", None))
+
+    def test_parses_done(self) -> None:
+        self.assertEqual(
+            status._parse_note_args(["--done", "abc123"]), (None, "abc123")
+        )
+
+    def test_rejects_empty_args(self) -> None:
+        self.assertIsNone(status._parse_note_args([]))
+
+    def test_rejects_too_many_args(self) -> None:
+        self.assertIsNone(status._parse_note_args(["a", "b", "c"]))
+
+
+class TestClaimAndNoteMainDispatch(unittest.TestCase):
+    def test_main_dispatches_claim(self) -> None:
+        with patch.object(status, "run_claim", return_value=0) as run_claim:
+            return_code = status.main(
+                ["claim", "--client", "codex", "--session", "x", "label"]
+            )
+
+        self.assertEqual(return_code, 0)
+        run_claim.assert_called_once_with(
+            "label", client_override="codex", session_override="x"
+        )
+
+    def test_main_claim_bad_usage(self) -> None:
+        with redirect_stderr(StringIO()):
+            self.assertEqual(status.main(["claim"]), os.EX_USAGE)
+
+    def test_main_dispatches_note(self) -> None:
+        with patch.object(status, "run_note", return_value=0) as run_note:
+            return_code = status.main(["note", "a finding"])
+
+        self.assertEqual(return_code, 0)
+        run_note.assert_called_once_with(text="a finding", done_id=None)
+
+    def test_main_note_bad_usage(self) -> None:
+        with redirect_stderr(StringIO()):
+            self.assertEqual(status.main(["note"]), os.EX_USAGE)
+
+    def test_main_dispatches_identity(self) -> None:
+        with patch.object(status, "run_identity", return_value=0) as run_identity:
+            return_code = status.main(["identity"])
+
+        self.assertEqual(return_code, 0)
+        run_identity.assert_called_once_with()
+
+    def test_main_identity_rejects_extra_args(self) -> None:
+        with redirect_stderr(StringIO()):
+            self.assertEqual(status.main(["identity", "extra"]), os.EX_USAGE)
+
+
+class TestStatusWithLabelsAndNotes(unittest.TestCase):
+    def test_status_text_and_json_include_label_age_and_notes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            home.mkdir()
+            _write_hooks(home, Path(status.__file__).resolve())
+            registry = home / status.REGISTRY_RELATIVE_PATH
+            status.handle_hook_event(
+                _prompt_event("session-1"),
+                registry,
+                process_identity=(123, "fingerprint"),
+                now="2026-08-01T09:55:00.000Z",
+            )
+            status.write_claim(
+                registry,
+                session_id="session-1",
+                client="codex",
+                cwd="/tmp/project",
+                label="convert pacing tests",
+                now="2026-08-01T09:55:00.000Z",
+            )
+            status.add_note(
+                registry,
+                "/tmp/project",
+                "COREBTC staleness pre-exists",
+                now="2026-08-01T09:00:00.000Z",
+            )
+            empty_claude = ({"ok": True, "source": status.CLAUDE_SOURCE}, [])
+
+            with patch.object(
+                status, "collect_claude_sessions", return_value=empty_claude
+            ):
+                output = StringIO()
+                return_code = status.run_status(
+                    json_output=False,
+                    stdout=output,
+                    codex_home=home,
+                    now="2026-08-01T10:00:00.000Z",
+                    fingerprint_lookup=lambda _pid: "fingerprint",
+                )
+
+            self.assertEqual(return_code, 0)
+            rendered = output.getvalue()
+            self.assertIn("CLIENT\tSTATE\tAGE\tNAME/LABEL\tSESSION\tCWD", rendered)
+            self.assertIn(
+                "codex\tin_flight\t5m\tconvert pacing tests\tsession-1\t/tmp/project",
+                rendered,
+            )
+            self.assertIn("Notes (/tmp/project):", rendered)
+            self.assertIn("COREBTC staleness pre-exists", rendered)
+
+            with patch.object(
+                status, "collect_claude_sessions", return_value=empty_claude
+            ):
+                json_output = StringIO()
+                status.run_status(
+                    json_output=True,
+                    stdout=json_output,
+                    codex_home=home,
+                    now="2026-08-01T10:00:00.000Z",
+                    fingerprint_lookup=lambda _pid: "fingerprint",
+                )
+
+            document = json.loads(json_output.getvalue())
+            session = document["sessions"][0]
+            self.assertEqual(session["label"], "convert pacing tests")
+            self.assertEqual(session["age_seconds"], 300)
+            self.assertIn("waiting_for", session)
+            self.assertIn("name", session)
+            self.assertEqual(
+                document["notes"]["/tmp/project"][0]["text"],
+                "COREBTC staleness pre-exists",
+            )
 
 
 if __name__ == "__main__":
