@@ -524,6 +524,21 @@ class TestClaudeNormalization(unittest.TestCase):
         self.assertEqual(sessions, [])
         self.assertEqual(errors, ["Claude row 0 has unsupported state/status"])
 
+    def test_timezone_less_started_at_marks_provider_partial(self) -> None:
+        rows = [
+            {
+                "sessionId": "missing-timezone",
+                "cwd": "/tmp/a",
+                "startedAt": "2026-08-01T10:00:00",
+                "status": "working",
+            }
+        ]
+
+        sessions, errors = status.normalize_claude_sessions(rows)
+
+        self.assertEqual(sessions, [])
+        self.assertEqual(errors, ["Claude live row 0 has no valid startedAt"])
+
     def test_collect_claude_handles_command_failure(self) -> None:
         def runner(*_args, **_kwargs):
             return subprocess.CompletedProcess([], 1, "", "daemon unavailable")
@@ -737,6 +752,11 @@ class TestAge(unittest.TestCase):
             status._age_seconds("not-a-timestamp", "2026-08-01T10:00:00.000Z")
         )
 
+    def test_age_seconds_returns_none_for_timezone_less_timestamp(self) -> None:
+        self.assertIsNone(
+            status._age_seconds("2026-08-01T10:00:00", "2026-08-01T10:05:00.000Z")
+        )
+
     def test_format_age_thresholds(self) -> None:
         self.assertEqual(status._format_age(None), "")
         self.assertEqual(status._format_age(45), "45s")
@@ -879,6 +899,30 @@ class TestIdentityCli(unittest.TestCase):
                 "client=codex session=session-1 label=convert pacing tests\n",
             )
 
+    def test_escapes_control_characters(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "codex-home"
+            registry = status._registry_dir(home)
+            status.write_claim(
+                registry,
+                session_id="session-1",
+                client="codex",
+                cwd="/tmp/project",
+                label="legit\nclient=forged",
+            )
+            stdout = StringIO()
+
+            status.run_identity(
+                codex_home=home,
+                identity={"client": "codex", "session_id": "session-1"},
+                stdout=stdout,
+            )
+
+            self.assertEqual(
+                stdout.getvalue(),
+                "client=codex session=session-1 label=legit\\nclient=forged\n",
+            )
+
     def test_unresolvable_identity_exits_one(self) -> None:
         stderr = StringIO()
 
@@ -970,6 +1014,11 @@ class TestClaimArgParsing(unittest.TestCase):
     def test_rejects_invalid_client(self) -> None:
         self.assertIsNone(
             status._parse_claim_args(["--client", "bogus", "--session", "x", "label"])
+        )
+
+    def test_rejects_empty_session_override(self) -> None:
+        self.assertIsNone(
+            status._parse_claim_args(["--client", "codex", "--session", "", "label"])
         )
 
     def test_rejects_multiple_positionals(self) -> None:
@@ -1099,6 +1148,56 @@ class TestNotes(unittest.TestCase):
             self.assertTrue(removed)
             self.assertEqual(status.load_notes(registry), {})
 
+    def test_same_millisecond_notes_have_distinct_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+            with patch.object(
+                status,
+                "_note_id",
+                side_effect=["00000000", "00000000", "11111111"],
+            ):
+                first = status.add_note(
+                    registry,
+                    "/repo",
+                    "same",
+                    now="2026-08-01T10:00:00.000Z",
+                )
+                second = status.add_note(
+                    registry,
+                    "/repo",
+                    "same",
+                    now="2026-08-01T10:00:00.000Z",
+                )
+
+            self.assertNotEqual(first["id"], second["id"])
+            self.assertTrue(status.remove_note(registry, "/repo", first["id"]))
+            notes = status.load_notes(registry, now="2026-08-01T10:00:01.000Z")
+            self.assertEqual([entry["id"] for entry in notes["/repo"]], [second["id"]])
+
+    def test_concurrent_adds_preserve_all_notes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / "registry"
+
+            def add(index: int) -> None:
+                status.add_note(
+                    registry,
+                    "/repo",
+                    f"note-{index}",
+                    now=f"2026-08-01T10:00:{index:02d}.000Z",
+                )
+
+            with ThreadPoolExecutor(max_workers=20) as executor:
+                list(executor.map(add, range(20)))
+
+            notes = status.load_notes(registry, now="2026-08-01T10:01:00.000Z")
+            self.assertEqual(
+                {entry["text"] for entry in notes["/repo"]},
+                {f"note-{index}" for index in range(20)},
+            )
+            lock_files = list((registry / "notes").glob(".*.lock"))
+            self.assertEqual(len(lock_files), 1)
+            self.assertEqual(stat.S_IMODE(lock_files[0].stat().st_mode), 0o600)
+
     def test_remove_unknown_note_returns_false(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             registry = Path(temporary) / "registry"
@@ -1124,6 +1223,14 @@ class TestNotes(unittest.TestCase):
             status.load_notes(registry, now="2026-08-01T10:00:00.000Z")
 
             self.assertEqual(list((registry / "notes").glob("*.json")), [])
+
+
+class TestRepoRoot(unittest.TestCase):
+    def test_preserves_trailing_spaces(self) -> None:
+        def runner(*_args, **_kwargs):
+            return subprocess.CompletedProcess([], 0, "/repo \n", "")
+
+        self.assertEqual(status._repo_root("/fallback", runner=runner), "/repo ")
 
 
 class TestNoteCli(unittest.TestCase):

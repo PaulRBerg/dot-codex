@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
@@ -10,7 +11,8 @@ import shlex
 import subprocess
 import sys
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TextIO
@@ -362,8 +364,20 @@ def _notes_path(notes_dir: Path, repo_root: str) -> Path:
     return notes_dir / _digest_filename(repo_root)
 
 
-def _note_id(text: str, created_at: str) -> str:
-    return hashlib.sha256(f"{created_at}\n{text}".encode()).hexdigest()[:8]
+def _note_id() -> str:
+    return os.urandom(4).hex()
+
+
+@contextmanager
+def _lock_notes_file(path: Path) -> Iterator[None]:
+    lock_path = path.with_name(f".{path.stem}.lock")
+    descriptor = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        os.fchmod(descriptor, 0o600)
+        fcntl.flock(descriptor, fcntl.LOCK_EX)
+        yield
+    finally:
+        os.close(descriptor)
 
 
 def _repo_root(
@@ -381,7 +395,8 @@ def _repo_root(
         return cwd
     if result.returncode != 0:
         return cwd
-    return result.stdout.strip() or cwd
+    root = result.stdout.removesuffix("\n").removesuffix("\r")
+    return root or cwd
 
 
 def _read_notes_file(path: Path) -> dict[str, Any] | None:
@@ -431,54 +446,61 @@ def add_note(
     notes_dir = _notes_dir(registry_dir)
     _ensure_dir(notes_dir)
     path = _notes_path(notes_dir, repo_root)
-    existing = _read_notes_file(path) if path.exists() else None
-    entries = list(existing["notes"]) if existing is not None else []
-    created_at = now or _utc_now()
-    entry: dict[str, Any] = {
-        "id": _note_id(text, created_at),
-        "text": text,
-        "created_at": created_at,
-    }
-    if session_id:
-        entry["session_id"] = session_id
-    if client:
-        entry["client"] = client
-    entries.append(entry)
-    _atomic_write_json(
-        path,
-        {
-            "schema_version": NOTE_SCHEMA_VERSION,
-            "repo_root": repo_root,
-            "notes": entries,
-        },
-    )
+    with _lock_notes_file(path):
+        existing = _read_notes_file(path)
+        entries = list(existing["notes"]) if existing is not None else []
+        existing_ids = {existing_entry["id"] for existing_entry in entries}
+        note_id = _note_id()
+        while note_id in existing_ids:
+            note_id = _note_id()
+        entry: dict[str, Any] = {
+            "id": note_id,
+            "text": text,
+            "created_at": now or _utc_now(),
+        }
+        if session_id:
+            entry["session_id"] = session_id
+        if client:
+            entry["client"] = client
+        entries.append(entry)
+        _atomic_write_json(
+            path,
+            {
+                "schema_version": NOTE_SCHEMA_VERSION,
+                "repo_root": repo_root,
+                "notes": entries,
+            },
+        )
     return entry
 
 
 def remove_note(registry_dir: Path, repo_root: str, note_id: str) -> bool:
     """Remove one note entry by id; returns whether anything was removed."""
     notes_dir = _notes_dir(registry_dir)
+    if not notes_dir.is_dir():
+        return False
     path = _notes_path(notes_dir, repo_root)
-    existing = _read_notes_file(path) if path.exists() else None
-    if existing is None:
-        return False
-    remaining = [entry for entry in existing["notes"] if entry["id"] != note_id]
-    if len(remaining) == len(existing["notes"]):
-        return False
-    if remaining:
-        _atomic_write_json(
-            path,
-            {
-                "schema_version": NOTE_SCHEMA_VERSION,
-                "repo_root": existing["repo_root"],
-                "notes": remaining,
-            },
-        )
-    else:
-        try:
-            path.unlink()
-        except FileNotFoundError:
-            pass
+    with _lock_notes_file(path):
+        existing = _read_notes_file(path)
+        if existing is None:
+            return False
+        remaining = [entry for entry in existing["notes"] if entry["id"] != note_id]
+        if len(remaining) == len(existing["notes"]):
+            return False
+        if remaining:
+            _atomic_write_json(
+                path,
+                {
+                    "schema_version": NOTE_SCHEMA_VERSION,
+                    "repo_root": existing["repo_root"],
+                    "notes": remaining,
+                },
+            )
+        else:
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
     return True
 
 
@@ -492,44 +514,46 @@ def load_notes(
     timestamp = now or _utc_now()
     result: dict[str, list[dict[str, Any]]] = {}
     for path in notes_dir.glob("*.json"):
-        parsed = _read_notes_file(path)
-        if parsed is None:
-            continue
-        kept_raw: list[dict[str, Any]] = []
-        kept_with_age: list[dict[str, Any]] = []
-        for entry in parsed["notes"]:
-            age = _age_seconds(entry["created_at"], timestamp)
-            if age is None or age > NOTE_TTL_SECONDS:
+        with _lock_notes_file(path):
+            parsed = _read_notes_file(path)
+            if parsed is None:
                 continue
-            kept_raw.append(entry)
-            kept_with_age.append({**entry, "age_seconds": age})
-        if len(kept_raw) != len(parsed["notes"]):
-            if kept_raw:
-                try:
-                    _atomic_write_json(
-                        path,
-                        {
-                            "schema_version": NOTE_SCHEMA_VERSION,
-                            "repo_root": parsed["repo_root"],
-                            "notes": kept_raw,
-                        },
-                    )
-                except OSError as error:
-                    _warn(
-                        f"could not prune expired notes in {path.name}: {error}", stderr
-                    )
-            else:
-                try:
-                    path.unlink()
-                except FileNotFoundError:
-                    pass
-                except OSError as error:
-                    _warn(
-                        f"could not remove empty notes file {path.name}: {error}",
-                        stderr,
-                    )
-        if kept_with_age:
-            result[parsed["repo_root"]] = kept_with_age
+            kept_raw: list[dict[str, Any]] = []
+            kept_with_age: list[dict[str, Any]] = []
+            for entry in parsed["notes"]:
+                age = _age_seconds(entry["created_at"], timestamp)
+                if age is None or age > NOTE_TTL_SECONDS:
+                    continue
+                kept_raw.append(entry)
+                kept_with_age.append({**entry, "age_seconds": age})
+            if len(kept_raw) != len(parsed["notes"]):
+                if kept_raw:
+                    try:
+                        _atomic_write_json(
+                            path,
+                            {
+                                "schema_version": NOTE_SCHEMA_VERSION,
+                                "repo_root": parsed["repo_root"],
+                                "notes": kept_raw,
+                            },
+                        )
+                    except OSError as error:
+                        _warn(
+                            f"could not prune expired notes in {path.name}: {error}",
+                            stderr,
+                        )
+                else:
+                    try:
+                        path.unlink()
+                    except FileNotFoundError:
+                        pass
+                    except OSError as error:
+                        _warn(
+                            f"could not remove empty notes file {path.name}: {error}",
+                            stderr,
+                        )
+            if kept_with_age:
+                result[parsed["repo_root"]] = kept_with_age
     return result
 
 
@@ -772,6 +796,14 @@ def collect_codex_sessions(
     return provider, sessions
 
 
+def _parse_iso8601(value: str) -> datetime | None:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else None
+
+
 def _iso_started_at(value: Any) -> str | None:
     if isinstance(value, bool):
         return None
@@ -784,7 +816,7 @@ def _iso_started_at(value: Any) -> str | None:
             )
         except (OverflowError, OSError, ValueError):
             return None
-    if isinstance(value, str) and value:
+    if isinstance(value, str) and value and _parse_iso8601(value) is not None:
         return value
     return None
 
@@ -891,13 +923,6 @@ def _provider_failure(
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     detail = str(error) or type(error).__name__
     return {"ok": False, "source": source, "error": detail}, []
-
-
-def _parse_iso8601(value: str) -> datetime | None:
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None
 
 
 def _age_seconds(reference: str, now: str) -> int | None:
@@ -1076,12 +1101,15 @@ def run_identity(
         return 1
     claims_dir = _claims_dir(_registry_dir(home))
     claim_path = _claim_path(claims_dir, resolved["session_id"])
-    claim = _read_claim(claim_path) if claim_path.exists() else None
+    claim = _read_claim(claim_path)
     if claim is not None and claim["client"] != resolved["client"]:
         claim = None
-    line = f"client={resolved['client']} session={resolved['session_id']}"
+    line = (
+        f"client={_human_text(resolved['client'])} "
+        f"session={_human_text(resolved['session_id'])}"
+    )
     if claim is not None:
-        line += f" label={claim['label']}"
+        line += f" label={_human_text(claim['label'])}"
     stdout.write(line + "\n")
     return 0
 
@@ -1177,6 +1205,8 @@ def _parse_claim_args(
     if (client_override is None) != (session_override is None):
         return None
     if client_override is not None and client_override not in ("codex", "claude"):
+        return None
+    if session_override is not None and not session_override:
         return None
     return positional[0], client_override, session_override
 
