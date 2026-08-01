@@ -55,6 +55,7 @@ Report executing Codex and Claude Code sessions machine-wide:
 ```bash
 ~/.codex/hooks/AgentSessionStatus/agent_session_status.py status
 ~/.codex/hooks/AgentSessionStatus/agent_session_status.py status --json
+~/.codex/hooks/AgentSessionStatus/agent_session_status.py presence
 ```
 
 The status command includes Codex turns between `UserPromptSubmit` and `Stop`/`SessionEnd`, plus Claude sessions that

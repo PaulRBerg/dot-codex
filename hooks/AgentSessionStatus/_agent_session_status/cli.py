@@ -7,13 +7,17 @@ import os
 import subprocess
 import sys
 from collections.abc import Callable, Sequence
+from io import StringIO
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
 from . import codex, inventory, registry
 from ._core import codex_home as default_codex_home
 from ._core import registry_dir, warn
 from .process import FingerprintLookup, process_start_fingerprint
+
+PRESENCE_GIT_TIMEOUT_SECONDS = 2.0
+MAX_LABEL_CHARS = 80
 
 
 def run_status(
@@ -32,6 +36,130 @@ def run_status(
     else:
         stdout.write(inventory.human_status(document))
     return 0 if document["complete"] else 2
+
+
+def _repo_root(
+    cwd: str,
+    runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+) -> str:
+    """Return the git root for cwd, falling back to cwd itself."""
+    try:
+        result = runner(
+            ["git", "-C", cwd, "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            timeout=PRESENCE_GIT_TIMEOUT_SECONDS,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return cwd
+    if result.returncode != 0:
+        return cwd
+    return result.stdout.strip() or cwd
+
+
+def _path_within(path: Path, root: Path) -> bool:
+    """Return whether path is root itself or nested under it."""
+    try:
+        path, root = path.resolve(), root.resolve()
+    except OSError:
+        pass
+    return path.is_relative_to(root)
+
+
+def _sanitize_label(text: str) -> str:
+    """Flatten cross-session text to one bounded printable line."""
+    printable = "".join(char if char.isprintable() else " " for char in text)
+    collapsed = " ".join(printable.split())
+    if len(collapsed) > MAX_LABEL_CHARS:
+        return collapsed[: MAX_LABEL_CHARS - 1].rstrip() + "…"
+    return collapsed
+
+
+def _session_label(session: dict[str, Any]) -> str:
+    """Identify a session by claim label or name, else client and short ID."""
+    for key in ("label", "name"):
+        value = session.get(key)
+        if isinstance(value, str):
+            sanitized = _sanitize_label(value)
+            if sanitized:
+                return sanitized
+    client = session.get("client", "")
+    session_id = session.get("session_id", "")
+    return f"{client}/{session_id[:8]}"
+
+
+def build_presence_line(
+    document: dict[str, Any], repo_root: str, own_session_id: str
+) -> str:
+    """Return the one-line presence notice, or "" when nothing is pending."""
+    root_path = Path(repo_root)
+    others: list[str] = []
+    for session in document.get("sessions", []):
+        if not isinstance(session, dict):
+            continue
+        session_id = session.get("session_id")
+        cwd = session.get("cwd")
+        if session_id == own_session_id:
+            continue
+        if not isinstance(cwd, str) or not cwd:
+            continue
+        if not _path_within(Path(cwd), root_path):
+            continue
+        others.append(_session_label(session))
+
+    note_count = 0
+    notes = document.get("notes")
+    if isinstance(notes, dict):
+        entries = notes.get(repo_root)
+        if isinstance(entries, list):
+            note_count = len(entries)
+
+    parts: list[str] = []
+    if others:
+        word = "session" if len(others) == 1 else "sessions"
+        parts.append(f"{len(others)} other {word} in this repo ({', '.join(others)})")
+    if note_count:
+        word = "note" if note_count == 1 else "notes"
+        parts.append(f"{note_count} {word} pending — run agents-status")
+    return f"agents: {'; '.join(parts)}" if parts else ""
+
+
+def run_presence(
+    stdin: TextIO = sys.stdin,
+    stdout: TextIO = sys.stdout,
+    inventory_builder: Callable[[], dict[str, Any]] | None = None,
+    repo_runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+) -> int:
+    """Print a safe, one-line notice of other agents in the caller's repo."""
+    line = ""
+    try:
+        payload = json.load(stdin)
+        if not isinstance(payload, dict):
+            raise TypeError("hook input must be a JSON object")
+        session_id = payload.get("session_id")
+        cwd = payload.get("cwd")
+        if not isinstance(session_id, str) or not session_id:
+            raise ValueError("missing session_id")
+        if not isinstance(cwd, str) or not cwd:
+            raise ValueError("missing cwd")
+
+        document = (
+            inventory_builder()
+            if inventory_builder is not None
+            else inventory.build_inventory(stderr=StringIO())
+        )
+        if document.get("complete"):
+            line = build_presence_line(
+                document, _repo_root(cwd, runner=repo_runner), session_id
+            )
+    except Exception:  # noqa: BLE001 - A hook must never break a prompt.
+        line = ""
+    if line:
+        try:
+            stdout.write(line + "\n")
+        except OSError:
+            pass
+    return 0
 
 
 def run_identity(
@@ -178,6 +306,7 @@ def _parse_note_args(args: Sequence[str]) -> tuple[str | None, str | None] | Non
 def _usage(stderr: TextIO | None = None) -> int:
     print(
         "usage: agent_session_status.py hook | status [--json] | identity | "
+        "presence | "
         "claim [--client <client> --session <id>] <label> | "
         "note <text> | note --done <id>",
         file=stderr or sys.stderr,
@@ -199,6 +328,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         if rest not in ([], ["--json"]):
             return _usage()
         return run_status(json_output=bool(rest))
+    if verb == "presence":
+        if rest:
+            return _usage()
+        return run_presence()
     if verb == "identity":
         if rest:
             return _usage()

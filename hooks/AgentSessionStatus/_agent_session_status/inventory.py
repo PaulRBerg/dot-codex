@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
 from . import claude, codex, process, registry
 from ._core import (
@@ -72,6 +73,7 @@ def build_inventory(
     codex_home: Path | None = None,
     now: str | None = None,
     fingerprint_lookup: FingerprintLookup = process_start_fingerprint,
+    stderr: TextIO = sys.stderr,
 ) -> dict[str, Any]:
     home = codex_home or default_codex_home()
     timestamp = now or utc_now()
@@ -96,6 +98,7 @@ def build_inventory(
         storage,
         fingerprint_lookup=fingerprint_lookup,
         claude_session_ids=claude_session_ids,
+        stderr=stderr,
     )
     claims = registry.load_claims(storage)
 
@@ -120,7 +123,7 @@ def build_inventory(
         )
     )
     providers = {"codex": codex_provider, "claude": claude_provider}
-    notes = registry.load_notes(storage, now=timestamp)
+    notes = registry.load_notes(storage, now=timestamp, stderr=stderr)
     return {
         "schema_version": SCHEMA_VERSION,
         "complete": all(provider["ok"] for provider in providers.values()),
