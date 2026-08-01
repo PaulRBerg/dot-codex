@@ -77,11 +77,22 @@ web_search = "live"
 [history]
   persistence = "save-all"
 
+[hooks.state]
+
 # ---------------------------------------------------------------------------- #
 #                                     Hooks                                    #
 # ---------------------------------------------------------------------------- #
 [hooks.state."/Users/prb/.codex/hooks.json:user_prompt_submit:0:0"]
   trusted_hash = "sha256:75c87492e44d38dbbb15b264ec50b8f0b165e94d4af0c95869543c0046ae7e47"
+
+[hooks.state."/Users/prb/.codex/hooks.json:session_end:0:0"]
+trusted_hash = "sha256:ce2ebbadc600aad4d792d10967e8c3f6c374265877af6a3b435b8b2ea5c71e74"
+
+[hooks.state."/Users/prb/.codex/hooks.json:user_prompt_submit:0:1"]
+trusted_hash = "sha256:f2a51b488e5ea3e93ee41cfdc7536590f3cacaf4ea78c60ddec7ebb3ebadd106"
+
+[hooks.state."/Users/prb/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:5dc307b2dbec1ba4ef06c35d92d66ff74561c88ee0259ec0a21ae683d9853b68"
 
 [marketplaces.openai-bundled]
   last_updated = "2026-07-30T09:54:33Z"
