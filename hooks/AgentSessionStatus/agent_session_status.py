@@ -6,13 +6,14 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import re
 import shlex
 import subprocess
 import sys
+import time
+from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Sequence, TextIO
+from typing import Any, TextIO
 
 SCHEMA_VERSION = 1
 CODEX_SOURCE = "hook-registry"
@@ -20,19 +21,20 @@ CLAUDE_SOURCE = "claude-agents-json"
 LIVE_CODEX_STATE = "in_flight"
 REGISTRY_RELATIVE_PATH = Path(".tmp/agent-session-status")
 HOOK_EVENTS = ("UserPromptSubmit", "Stop", "SessionEnd")
-RECORD_FIELDS = frozenset(
+PS_TIMEOUT_SECONDS = 1.0
+CODEX_IDENTITY_TIMEOUT_SECONDS = 1.5
+RECORD_STRING_FIELDS = frozenset(
     {
-        "schema_version",
         "session_id",
         "turn_id",
         "cwd",
         "state",
         "started_at",
         "updated_at",
-        "pid",
         "process_start_fingerprint",
     }
 )
+RECORD_FIELDS = RECORD_STRING_FIELDS | {"schema_version", "pid"}
 CLAUDE_LIVE_STATES = {
     "working": "working",
     "blocked": "waiting",
@@ -45,8 +47,6 @@ CLAUDE_TERMINAL_STATES = {
     "idle",
     "stopped",
 }
-HOOK_COMMAND_RE = re.compile(r"(?:^|\s)hook(?:\s|$)")
-
 ProcessIdentity = tuple[int, str]
 FingerprintLookup = Callable[[int], str | None]
 
@@ -82,7 +82,9 @@ def _record_path(registry_dir: Path, session_id: str) -> Path:
     return registry_dir / f"{digest}.json"
 
 
-def _ps_value(pid: int, field: str) -> str:
+def _ps_value(pid: int, field: str, timeout_seconds: float = PS_TIMEOUT_SECONDS) -> str:
+    if timeout_seconds <= 0:
+        return ""
     try:
         result = subprocess.run(
             ["ps", "-o", f"{field}=", "-p", str(pid)],
@@ -90,7 +92,7 @@ def _ps_value(pid: int, field: str) -> str:
             check=False,
             env={**os.environ, "LC_ALL": "C"},
             text=True,
-            timeout=1,
+            timeout=timeout_seconds,
         )
     except (OSError, subprocess.SubprocessError):
         return ""
@@ -99,9 +101,11 @@ def _ps_value(pid: int, field: str) -> str:
     return result.stdout.strip()
 
 
-def process_start_fingerprint(pid: int) -> str | None:
+def process_start_fingerprint(
+    pid: int, timeout_seconds: float = PS_TIMEOUT_SECONDS
+) -> str | None:
     """Return a stable fingerprint for one OS process lifetime."""
-    started = _ps_value(pid, "lstart")
+    started = _ps_value(pid, "lstart", timeout_seconds)
     if not started:
         return None
     return hashlib.sha256(started.encode("utf-8")).hexdigest()
@@ -127,24 +131,33 @@ def _looks_like_codex_process(command_name: str, command: str) -> bool:
     return any(is_codex_name(token) for token in tokens[:4])
 
 
-def codex_process_identity() -> ProcessIdentity | None:
+def codex_process_identity(
+    timeout_seconds: float = CODEX_IDENTITY_TIMEOUT_SECONDS,
+) -> ProcessIdentity | None:
     """Find the Codex ancestor that launched this hook."""
     pid = os.getppid()
     visited: set[int] = set()
+    deadline = time.monotonic() + timeout_seconds
+
+    def ps_value(field: str) -> str:
+        remaining = deadline - time.monotonic()
+        return _ps_value(pid, field, min(PS_TIMEOUT_SECONDS, remaining))
 
     for _ in range(16):
-        if pid <= 1 or pid in visited:
+        if pid <= 1 or pid in visited or time.monotonic() >= deadline:
             break
         visited.add(pid)
 
-        command_name = _ps_value(pid, "comm")
-        command = _ps_value(pid, "command")
+        command_name = ps_value("comm")
+        command = ps_value("command")
         if _looks_like_codex_process(command_name, command):
-            fingerprint = process_start_fingerprint(pid)
+            fingerprint = process_start_fingerprint(
+                pid, min(PS_TIMEOUT_SECONDS, deadline - time.monotonic())
+            )
             if fingerprint:
                 return pid, fingerprint
 
-        parent = _ps_value(pid, "ppid")
+        parent = ps_value("ppid")
         try:
             pid = int(parent)
         except ValueError:
@@ -162,28 +175,21 @@ def _read_record(path: Path) -> dict[str, Any] | None:
         return None
     if data.get("schema_version") != SCHEMA_VERSION:
         return None
-    string_fields = (
-        "session_id",
-        "turn_id",
-        "cwd",
-        "state",
-        "started_at",
-        "updated_at",
-        "process_start_fingerprint",
-    )
-    if any(not isinstance(data.get(field), str) for field in string_fields):
+    if any(
+        not isinstance(data.get(field), str) or not data[field]
+        for field in RECORD_STRING_FIELDS
+    ):
         return None
     if data.get("state") != LIVE_CODEX_STATE:
         return None
-    if not isinstance(data.get("pid"), int) or data["pid"] <= 0:
+    pid = data.get("pid")
+    if isinstance(pid, bool) or not isinstance(pid, int) or pid <= 0:
         return None
     return data
 
 
 def _atomic_write_record(path: Path, record: dict[str, Any]) -> None:
-    temporary = path.parent / (
-        f".{path.stem}.tmp-{os.getpid()}-{os.urandom(6).hex()}"
-    )
+    temporary = path.parent / (f".{path.stem}.tmp-{os.getpid()}-{os.urandom(6).hex()}")
     descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
@@ -212,18 +218,21 @@ def prune_registry(
     registry_dir: Path,
     fingerprint_lookup: FingerprintLookup = process_start_fingerprint,
     stderr: TextIO = sys.stderr,
+    exclude_path: Path | None = None,
 ) -> None:
     """Remove malformed records and records whose process lifetime ended."""
     if not registry_dir.is_dir():
         return
 
     for path in registry_dir.glob("*.json"):
+        if path == exclude_path:
+            continue
         record = _read_record(path)
         stale = record is None
         if record is not None:
-            stale = fingerprint_lookup(record["pid"]) != record[
-                "process_start_fingerprint"
-            ]
+            stale = (
+                fingerprint_lookup(record["pid"]) != record["process_start_fingerprint"]
+            )
         if not stale:
             continue
         try:
@@ -244,7 +253,6 @@ def handle_hook_event(
 ) -> None:
     """Apply one Codex lifecycle event to the live-turn registry."""
     _ensure_registry_dir(registry_dir)
-    prune_registry(registry_dir, fingerprint_lookup=fingerprint_lookup, stderr=stderr)
 
     event = data.get("hook_event_name")
     session_id = data.get("session_id")
@@ -255,6 +263,9 @@ def handle_hook_event(
 
     if event in {"Stop", "SessionEnd"}:
         _remove_record(registry_dir, session_id)
+        prune_registry(
+            registry_dir, fingerprint_lookup=fingerprint_lookup, stderr=stderr
+        )
         return
 
     turn_id = data.get("turn_id")
@@ -292,6 +303,12 @@ def handle_hook_event(
         "process_start_fingerprint": fingerprint,
     }
     _atomic_write_record(path, record)
+    prune_registry(
+        registry_dir,
+        fingerprint_lookup=fingerprint_lookup,
+        stderr=stderr,
+        exclude_path=path,
+    )
 
 
 def run_hook(
@@ -303,9 +320,11 @@ def run_hook(
     try:
         data = json.load(stdin)
         if not isinstance(data, dict):
-            raise ValueError("hook input must be a JSON object")
-        handle_hook_event(data, _registry_dir(codex_home or _codex_home()), stderr=stderr)
-    except Exception as error:  # Hook mode must remain non-blocking.
+            raise TypeError("hook input must be a JSON object")
+        handle_hook_event(
+            data, _registry_dir(codex_home or _codex_home()), stderr=stderr
+        )
+    except Exception as error:  # noqa: BLE001 - Hook mode must never block Codex.
         _warn(str(error), stderr)
     return 0
 
@@ -324,12 +343,13 @@ def _hook_registered_for_event(
             if not isinstance(handler, dict):
                 continue
             command = handler.get("command")
-            if (
-                handler.get("type") == "command"
-                and isinstance(command, str)
-                and script in command
-                and HOOK_COMMAND_RE.search(command)
-            ):
+            if handler.get("type") != "command" or not isinstance(command, str):
+                continue
+            try:
+                command_tokens = shlex.split(command)
+            except ValueError:
+                continue
+            if command_tokens == [script, "hook"]:
                 return True
     return False
 
@@ -361,19 +381,19 @@ def collect_codex_sessions(
     fingerprint_lookup: FingerprintLookup = process_start_fingerprint,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     home = codex_home or _codex_home()
-    source = {"ok": True, "source": CODEX_SOURCE}
+    provider = {"ok": True, "source": CODEX_SOURCE}
     registration_error = _registration_error(
         home, script_path or Path(__file__).resolve()
     )
     if registration_error:
-        return {**source, "ok": False, "error": registration_error}, []
+        return {**provider, "ok": False, "error": registration_error}, []
 
     registry_dir = _registry_dir(home)
     if not registry_dir.exists():
-        return source, []
+        return provider, []
     if not registry_dir.is_dir():
         return {
-            **source,
+            **provider,
             "ok": False,
             "error": f"registry is not a directory: {registry_dir}",
         }, []
@@ -399,12 +419,12 @@ def collect_codex_sessions(
         )
 
     if invalid_records:
-        source = {
-            **source,
+        provider = {
+            **provider,
             "ok": False,
             "error": f"{invalid_records} invalid registry record(s)",
         }
-    return source, sessions
+    return provider, sessions
 
 
 def _iso_started_at(value: Any) -> str | None:
@@ -439,14 +459,20 @@ def normalize_claude_sessions(
 
         raw_state = row.get("state")
         raw_status = row.get("status")
-        state = raw_state.lower() if isinstance(raw_state, str) else ""
-        status = raw_status.lower() if isinstance(raw_status, str) else ""
+        if raw_state is not None and not isinstance(raw_state, str):
+            errors.append(f"Claude row {index} has invalid state")
+            continue
+        if raw_status is not None and not isinstance(raw_status, str):
+            errors.append(f"Claude row {index} has invalid status")
+            continue
+
+        reported_state = raw_state or raw_status
+        state = reported_state.lower() if isinstance(reported_state, str) else ""
         if state in CLAUDE_TERMINAL_STATES:
             continue
         normalized = CLAUDE_LIVE_STATES.get(state)
         if normalized is None:
-            normalized = CLAUDE_LIVE_STATES.get(status)
-        if normalized is None:
+            errors.append(f"Claude row {index} has unsupported state/status")
             continue
 
         session_id = row.get("sessionId") or row.get("id")
@@ -480,7 +506,7 @@ def normalize_claude_sessions(
 def collect_claude_sessions(
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    source = {"ok": True, "source": CLAUDE_SOURCE}
+    provider = {"ok": True, "source": CLAUDE_SOURCE}
     try:
         result = runner(
             ["claude", "agents", "--json"],
@@ -490,24 +516,37 @@ def collect_claude_sessions(
             timeout=10,
         )
     except (OSError, subprocess.SubprocessError) as error:
-        return {**source, "ok": False, "error": str(error)}, []
+        return {**provider, "ok": False, "error": str(error)}, []
     if result.returncode != 0:
         detail = result.stderr.strip() or f"exit {result.returncode}"
-        return {**source, "ok": False, "error": detail}, []
+        return {**provider, "ok": False, "error": detail}, []
     try:
         rows = json.loads(result.stdout)
     except json.JSONDecodeError as error:
-        return {**source, "ok": False, "error": f"invalid JSON: {error}"}, []
+        return {**provider, "ok": False, "error": f"invalid JSON: {error}"}, []
 
     sessions, errors = normalize_claude_sessions(rows)
     if errors:
-        return {**source, "ok": False, "error": "; ".join(errors)}, sessions
-    return source, sessions
+        return {**provider, "ok": False, "error": "; ".join(errors)}, sessions
+    return provider, sessions
+
+
+def _provider_failure(
+    source: str, error: Exception
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    detail = str(error) or type(error).__name__
+    return {"ok": False, "source": source, "error": detail}, []
 
 
 def build_inventory() -> dict[str, Any]:
-    codex_provider, codex_sessions = collect_codex_sessions()
-    claude_provider, claude_sessions = collect_claude_sessions()
+    try:
+        codex_provider, codex_sessions = collect_codex_sessions()
+    except Exception as error:  # noqa: BLE001 - Providers fail independently.
+        codex_provider, codex_sessions = _provider_failure(CODEX_SOURCE, error)
+    try:
+        claude_provider, claude_sessions = collect_claude_sessions()
+    except Exception as error:  # noqa: BLE001 - Providers fail independently.
+        claude_provider, claude_sessions = _provider_failure(CLAUDE_SOURCE, error)
     sessions = [*codex_sessions, *claude_sessions]
     client_order = {"codex": 0, "claude": 1}
     sessions.sort(
@@ -526,6 +565,10 @@ def build_inventory() -> dict[str, Any]:
     }
 
 
+def _human_text(value: Any) -> str:
+    return json.dumps(str(value), ensure_ascii=False)[1:-1]
+
+
 def _human_status(document: dict[str, Any]) -> str:
     lines: list[str] = []
     sessions = document["sessions"]
@@ -535,10 +578,10 @@ def _human_status(document: dict[str, Any]) -> str:
             lines.append(
                 "\t".join(
                     (
-                        session["client"],
-                        session["state"],
-                        session["session_id"],
-                        session["cwd"],
+                        _human_text(session["client"]),
+                        _human_text(session["state"]),
+                        _human_text(session["session_id"]),
+                        _human_text(session["cwd"]),
                     )
                 )
             )
@@ -549,9 +592,14 @@ def _human_status(document: dict[str, Any]) -> str:
     failed = []
     for name, provider in document["providers"].items():
         provider_state = "ok" if provider["ok"] else "unavailable"
-        provider_parts.append(f"{name}={provider_state} ({provider['source']})")
+        provider_parts.append(
+            f"{_human_text(name)}={provider_state} ({_human_text(provider['source'])})"
+        )
         if not provider["ok"]:
-            failed.append(f"{name}: {provider.get('error', 'unknown error')}")
+            failed.append(
+                f"{_human_text(name)}: "
+                f"{_human_text(provider.get('error', 'unknown error'))}"
+            )
     lines.append(f"Coverage: {'; '.join(provider_parts)}")
     if failed:
         lines.append(f"WARNING: incomplete provider coverage — {'; '.join(failed)}")
