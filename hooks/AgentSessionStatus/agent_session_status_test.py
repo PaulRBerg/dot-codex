@@ -423,6 +423,13 @@ class TestClaudeNormalization(unittest.TestCase):
                 "pid": 10,
             },
             {
+                "sessionId": "interactive-busy",
+                "cwd": "/tmp/f",
+                "startedAt": 1785580837600,
+                "status": "busy",
+                "pid": 14,
+            },
+            {
                 "id": "background-blocked",
                 "cwd": "/tmp/b",
                 "startedAt": 1785580837602,
@@ -459,11 +466,12 @@ class TestClaudeNormalization(unittest.TestCase):
             [(row["session_id"], row["state"]) for row in sessions],
             [
                 ("interactive-working", "working"),
+                ("interactive-busy", "working"),
                 ("background-blocked", "waiting"),
                 ("interactive-waiting", "waiting"),
             ],
         )
-        self.assertIsNone(sessions[1]["pid"])
+        self.assertIsNone(sessions[2]["pid"])
 
     def test_live_malformed_row_marks_provider_partial(self) -> None:
         rows = [

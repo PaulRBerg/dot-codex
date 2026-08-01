@@ -36,6 +36,7 @@ RECORD_STRING_FIELDS = frozenset(
 )
 RECORD_FIELDS = RECORD_STRING_FIELDS | {"schema_version", "pid"}
 CLAUDE_LIVE_STATES = {
+    "busy": "working",
     "working": "working",
     "blocked": "waiting",
     "waiting": "waiting",
