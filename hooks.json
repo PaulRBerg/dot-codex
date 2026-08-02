@@ -1,5 +1,16 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ai-coord hook codex",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
@@ -7,16 +18,16 @@
             "type": "command",
             "command": "/Users/prb/.local/bin/uv run python /Users/prb/.codex/hooks/UserPromptSubmit/copy_prompt_to_clipboard.py",
             "timeout": 10
-          },
+          }
+        ]
+      },
+      {
+        "hooks": [
           {
             "type": "command",
-            "command": "/Users/prb/.codex/hooks/AgentSessionStatus/agent_session_status.py hook",
-            "timeout": 3
-          },
-          {
-            "type": "command",
-            "command": "/Users/prb/.codex/hooks/AgentSessionStatus/agent_session_status.py presence",
-            "timeout": 3
+            "command": "ai-coord hook codex",
+            "timeout": 5,
+            "additionalContextLimit": 200
           }
         ]
       }
@@ -26,8 +37,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/prb/.codex/hooks/AgentSessionStatus/agent_session_status.py hook",
-            "timeout": 3
+            "command": "ai-coord hook codex",
+            "timeout": 5
           }
         ]
       }
@@ -37,8 +48,30 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/prb/.codex/hooks/AgentSessionStatus/agent_session_status.py hook",
+            "command": "ai-coord hook codex",
             "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ai-coord hook codex",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ai-coord hook codex",
+            "timeout": 5
           }
         ]
       }
