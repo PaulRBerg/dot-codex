@@ -91,6 +91,9 @@ trusted_hash = "sha256:f2a51b488e5ea3e93ee41cfdc7536590f3cacaf4ea78c60ddec7ebb3e
 [hooks.state."/Users/prb/.codex/hooks.json:stop:0:0"]
 trusted_hash = "sha256:5dc307b2dbec1ba4ef06c35d92d66ff74561c88ee0259ec0a21ae683d9853b68"
 
+[hooks.state."/Users/prb/.codex/hooks.json:user_prompt_submit:0:2"]
+trusted_hash = "sha256:9f9565b296b0d5f3a4975e7d6edcc95796aa376bf8ba9b7d3e3df2f6fd744183"
+
 [marketplaces.openai-bundled]
   last_updated = "2026-07-30T09:54:33Z"
   source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
