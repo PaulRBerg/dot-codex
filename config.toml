@@ -156,7 +156,7 @@ web_search = "live"
   path = "/Users/prb/.codex/skills/.system/imagegen/SKILL.md"
 
 [[skills.config]]
-  enabled = true
+  enabled = false
   path = "/Users/prb/.codex/skills/.system/openai-docs/SKILL.md"
 
 [[skills.config]]
