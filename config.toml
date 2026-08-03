@@ -112,6 +112,9 @@ web_search = "live"
 [hooks.state."/Users/prb/.codex/hooks.json:post_tool_use:0:0"]
   trusted_hash = "sha256:92607b5469437fbdcfd2a72756c6aef18f9e16c51a77c91b9e9230f12b683ef1"
 
+[hooks.state."/private/tmp/ai-coord-codex-canary.7eTcqr/.codex/hooks.json:post_tool_use:0:0"]
+trusted_hash = "sha256:4cc144023ba07df3e2d0562de3a5375af8064b73342188f999031028966f5ba5"
+
 [marketplaces.openai-bundled]
   last_updated = "2026-07-30T09:54:33Z"
   source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
@@ -339,3 +342,6 @@ web_search = "live"
 
 [projects."/Users/prb/projects/ai-coord"]
   trust_level = "trusted"
+
+[projects."/private/tmp/ai-coord-codex-canary.7eTcqr"]
+trust_level = "trusted"
