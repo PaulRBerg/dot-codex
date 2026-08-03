@@ -35,8 +35,8 @@ Active hooks:
 
 - `hooks/UserPromptSubmit/copy_prompt_to_clipboard.py`: copies each submitted prompt to the macOS clipboard via
   `/usr/bin/pbcopy` so Raycast clipboard history keeps a searchable prompt log.
-- `hooks/AgentSessionStatus/agent_session_status.py`: maintains a privacy-minimal registry for in-flight Codex turns and
-  combines it with Claude Code's native session inventory.
+- `ai-coord hook codex`: tracks Codex lifecycle, presence, work ownership, messages, and repository notes in the shared
+  [`ai-coord`](https://github.com/PaulRBerg/ai-coord) ledger used by Claude Code.
 
 The clipboard hook sanitizes noisy prompt content before copying:
 
@@ -50,31 +50,26 @@ The hook writes nothing to stdout. Warnings go to stderr and all failures exit 0
 
 Set `CODEX_CLIP_DEBUG=1` to append raw hook stdin to `hooks/UserPromptSubmit/.debug.jsonl`.
 
-Report executing Codex and Claude Code sessions machine-wide:
+Check the installation or report Codex and Claude Code sessions:
 
 ```bash
-~/.codex/hooks/AgentSessionStatus/agent_session_status.py status
-~/.codex/hooks/AgentSessionStatus/agent_session_status.py status --json
-~/.codex/hooks/AgentSessionStatus/agent_session_status.py presence
+ai-coord check
+ai-coord status
+ai-coord status --all
+ai-coord status --json
 ```
 
-The status command includes Codex turns between `UserPromptSubmit` and `Stop`/`SessionEnd`, plus Claude sessions that
-are working, waiting for input, or idle. It excludes completed sessions. Exit `0` means both providers were available,
-exit `2` means the output has partial provider coverage, and exit `64` means invalid command usage.
-
-Identify the calling session, attach a task label, or manage a repository-scoped note:
+Acquire literal repository paths before editing, wait for queued work, then release the scope when complete:
 
 ```bash
-~/.codex/hooks/AgentSessionStatus/agent_session_status.py identity
-~/.codex/hooks/AgentSessionStatus/agent_session_status.py claim "task label"
-~/.codex/hooks/AgentSessionStatus/agent_session_status.py note "observation"
-~/.codex/hooks/AgentSessionStatus/agent_session_status.py note --done <note-id>
+ai-coord start "task label" "src/owned-path"
+ai-coord wait
+ai-coord done
 ```
 
-Session records contain only session and turn IDs, cwd, state, timestamps, and a process-lifetime identity. Claim
-sidecars add a task label and session attribution; note files contain repository-scoped observation text with optional
-session attribution and expire after seven days. All registry data is stored under
-`~/.codex/.tmp/agent-session-status/` with private permissions.
+`ai-coord trailer` prints commit attribution. The `msg`, `inbox`, and `note` commands provide bounded peer communication
+and durable repository findings. Private state lives under `$XDG_STATE_HOME/ai-coord`, defaulting to
+`~/.local/state/ai-coord`.
 
 After adding or changing a non-managed hook, open `/hooks` in Codex CLI to review and trust the hook definition.
 
@@ -82,3 +77,4 @@ After adding or changing a non-managed hook, open `/hooks` in Codex CLI to revie
 
 - https://github.com/PaulRBerg/dot-claude
 - https://github.com/PaulRBerg/dot-gemini
+- https://github.com/PaulRBerg/ai-coord

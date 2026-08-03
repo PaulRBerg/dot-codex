@@ -49,9 +49,7 @@ alias b := build
 
 # Run hook unit tests.
 @test-hooks:
-    {{ uv }} run python -m unittest \
-        hooks/UserPromptSubmit/copy_prompt_to_clipboard_test.py \
-        hooks/AgentSessionStatus/agent_session_status_test.py
+    {{ uv }} run python -m unittest hooks/UserPromptSubmit/copy_prompt_to_clipboard_test.py
 
 # Run all tests.
 @test: test-hooks
