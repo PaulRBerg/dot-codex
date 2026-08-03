@@ -83,16 +83,31 @@ web_search = "live"
   trusted_hash = "sha256:75c87492e44d38dbbb15b264ec50b8f0b165e94d4af0c95869543c0046ae7e47"
 
 [hooks.state."/Users/prb/.codex/hooks.json:session_end:0:0"]
-trusted_hash = "sha256:ce2ebbadc600aad4d792d10967e8c3f6c374265877af6a3b435b8b2ea5c71e74"
+trusted_hash = "sha256:fa07d672d33c044571fadc9cef5aefe0f0005f053a0f829e199ac811e5348c4b"
 
 [hooks.state."/Users/prb/.codex/hooks.json:user_prompt_submit:0:1"]
 trusted_hash = "sha256:f2a51b488e5ea3e93ee41cfdc7536590f3cacaf4ea78c60ddec7ebb3ebadd106"
 
 [hooks.state."/Users/prb/.codex/hooks.json:stop:0:0"]
-trusted_hash = "sha256:5dc307b2dbec1ba4ef06c35d92d66ff74561c88ee0259ec0a21ae683d9853b68"
+trusted_hash = "sha256:99dc693bfc6edb3dfa627c5fa24cdcde5ff936f3ddf8d48d8b3939af72b6cd15"
 
 [hooks.state."/Users/prb/.codex/hooks.json:user_prompt_submit:0:2"]
 trusted_hash = "sha256:9f9565b296b0d5f3a4975e7d6edcc95796aa376bf8ba9b7d3e3df2f6fd744183"
+
+[hooks.state."/Users/prb/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:ad78ec8da4c5dca00fb0da356c377408e4f523fec7a9ac3ce1c25c5a6f7a8700"
+
+[hooks.state."/Users/prb/.codex/hooks.json:user_prompt_submit:1:0"]
+trusted_hash = "sha256:9bd3ca167a04f97e62c8d5cee512642385220db1307510f9f76f2d445532dddf"
+
+[hooks.state."/Users/prb/.codex/hooks.json:subagent_start:0:0"]
+trusted_hash = "sha256:a3cc9cf9b214ace4d93f02b5131f5ff118c7baf85a9a5773fdfacad15cd51f41"
+
+[hooks.state."/Users/prb/.codex/hooks.json:subagent_stop:0:0"]
+trusted_hash = "sha256:ae92c5a2fac035fe51ed8005b28161429b21b9a60da1ab587b6765d75e095f08"
+
+[hooks.state."/Users/prb/projects/prb-finance/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:f64b46f9840bd9e66252b366b7f0067ff79a0a3887dea1ea8b001d5a8bf6d3de"
 
 [marketplaces.openai-bundled]
   last_updated = "2026-07-30T09:54:33Z"
@@ -318,3 +333,6 @@ trusted_hash = "sha256:9f9565b296b0d5f3a4975e7d6edcc95796aa376bf8ba9b7d3e3df2f6f
 
 [projects."/private/tmp/claude-501/-Users-prb-projects-agent-skills/424162c4-a345-4af9-8f01-a09dfcfb0471/scratchpad/rulestest"]
   trust_level = "trusted"
+
+[projects."/Users/prb/projects/ai-coord"]
+trust_level = "trusted"
