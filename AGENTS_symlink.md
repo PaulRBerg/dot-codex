@@ -1,1 +1,1 @@
-/Users/prb/.claude/CLAUDE.md
+/Users/prb/.agents/AGENTS.md
