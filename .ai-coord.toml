@@ -1,2 +1,2 @@
 [dirt]
-benign = ["config.toml"]
+  benign = ["config.toml"]

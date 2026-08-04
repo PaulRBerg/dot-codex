@@ -338,4 +338,7 @@ web_search = "live"
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/routemesh-cli"]
+  trust_level = "trusted"
+
+[projects."/private/tmp/codex-handoff-smoke.0nhJ2r/codex"]
 trust_level = "trusted"
