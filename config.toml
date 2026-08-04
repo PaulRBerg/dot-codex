@@ -339,3 +339,6 @@ web_search = "live"
 
 [projects."/Users/prb/projects/ai-coord"]
   trust_level = "trusted"
+
+[projects."/Users/prb/projects/routemesh-cli"]
+trust_level = "trusted"
