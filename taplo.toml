@@ -1,0 +1,11 @@
+exclude = [".tmp/**"]
+include = ["**/*.toml"]
+
+[formatting]
+  align_comments = true
+  array_auto_collapse = false
+  column_width = 120
+  indent_entries = true
+  reorder_arrays = false
+  reorder_inline_tables = true
+  reorder_keys = true

@@ -10,6 +10,7 @@ set unstable
 
 uv := require("uv")
 gitleaks := require("gitleaks")
+taplo := require("taplo")
 
 # ---------------------------------------------------------------------------- #
 #                                   COMMANDS                                   #
@@ -31,6 +32,16 @@ alias glc := gitleaks-check
 @gitleaks-staged:
     {{ gitleaks }} git --config .gitleaks.toml --redact --no-banner --staged .
 alias gls := gitleaks-staged
+
+# Check TOML formatting.
+[group("checks")]
+@toml-format-check:
+    {{ taplo }} format --check
+
+# Format TOML files in place.
+[group("checks")]
+@toml-format-write:
+    {{ taplo }} format
 
 # Install tracked Git hooks for this repo.
 @hooks-install:
