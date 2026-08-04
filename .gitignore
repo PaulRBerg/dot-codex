@@ -28,8 +28,8 @@ models_cache.json
 session_index.jsonl
 version.json
 
-# tracked profiles
-!vercel-kimi.config.toml
+# tracked config profiles
+!*.config.toml
 
 # tracked hooks
 !hooks/
