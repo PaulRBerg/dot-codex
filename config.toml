@@ -64,8 +64,11 @@ plan_mode_reasoning_effort = "max"
 
 [features.multi_agent_v2]
   enabled = true
+  expose_spawn_agent_model_overrides = true
+  max_concurrent_threads_per_session = 8
   hide_spawn_agent_metadata = false
   tool_namespace = "agents"
+  wait_agent_enabled = true
 
   # ---------------------------------------------------------------------------- #
   #                                    History                                   #
