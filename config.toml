@@ -342,3 +342,6 @@ plan_mode_reasoning_effort = "max"
 
 [projects."/Users/prb/work/templates/rust-template"]
   trust_level = "trusted"
+
+[projects."/Users/prb/projects/ai-commit"]
+trust_level = "trusted"
