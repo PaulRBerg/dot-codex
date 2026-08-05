@@ -13,11 +13,11 @@ model = "gpt-5.6-sol"
 model_reasoning_effort = "max"
 notify = ["ai-notify", "codex"]
 personality = "friendly"
-plan_mode_reasoning_effort = "xhigh"
 sandbox_mode = "danger-full-access"
 service_tier = "default"
 suppress_unstable_features_warning = true
 web_search = "live"
+plan_mode_reasoning_effort = "max"
 
 # ---------------------------------------------------------------------------- #
 #                                     Apps                                     #
@@ -338,4 +338,7 @@ web_search = "live"
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/routemesh-cli"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/work/templates/rust-template"]
   trust_level = "trusted"
