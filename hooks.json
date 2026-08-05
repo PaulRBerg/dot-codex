@@ -21,17 +21,7 @@
         ]
       }
     ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ai-coord hook codex",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
+    
     "Stop": [
       {
         "hooks": [
@@ -78,6 +68,18 @@
     ],
     "PostToolUse": [
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ai-coord hook codex",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
         "hooks": [
           {
             "type": "command",

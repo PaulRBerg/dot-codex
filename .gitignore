@@ -29,7 +29,7 @@ session_index.jsonl
 version.json
 
 # tracked config profiles
-!*.config.toml
+*.config.toml
 
 # tracked hooks
 !hooks/

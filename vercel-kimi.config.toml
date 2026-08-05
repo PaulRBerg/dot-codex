@@ -1,8 +1,0 @@
-model_provider = "vercel"
-model = "moonshotai/kimi-k3"
-model_reasoning_effort = "high"
-
-[model_providers.vercel]
-name = "Vercel AI Gateway"
-base_url = "https://ai-gateway.vercel.sh/v1"
-env_key = "AI_GATEWAY_API_KEY"
