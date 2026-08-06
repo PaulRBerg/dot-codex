@@ -13,11 +13,11 @@ model = "gpt-5.6-sol"
 model_reasoning_effort = "max"
 notify = ["ai-notify", "codex"]
 personality = "friendly"
+plan_mode_reasoning_effort = "max"
 sandbox_mode = "danger-full-access"
 service_tier = "default"
 suppress_unstable_features_warning = true
 web_search = "live"
-plan_mode_reasoning_effort = "max"
 
 # ---------------------------------------------------------------------------- #
 #                                     Apps                                     #
@@ -65,8 +65,8 @@ plan_mode_reasoning_effort = "max"
 [features.multi_agent_v2]
   enabled = true
   expose_spawn_agent_model_overrides = true
-  max_concurrent_threads_per_session = 8
   hide_spawn_agent_metadata = false
+  max_concurrent_threads_per_session = 4
   tool_namespace = "agents"
   wait_agent_enabled = true
 
@@ -347,4 +347,4 @@ plan_mode_reasoning_effort = "max"
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/ai-commit"]
-trust_level = "trusted"
+  trust_level = "trusted"
