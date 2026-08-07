@@ -24,8 +24,8 @@ just build
 just test
 ```
 
-Regenerates `AGENTS.md` by flattening `AGENTS_symlink.md` and appending `context/AGENTS_EXTRA.md`.
-Runs hook unit tests with stdlib `unittest`.
+Regenerates `AGENTS.md` by flattening `AGENTS_symlink.md` and appending `context/AGENTS_EXTRA.md`. Runs hook unit tests
+with stdlib `unittest`.
 
 ## Hooks
 

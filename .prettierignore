@@ -1,5 +1,11 @@
+# runtime state
+.cache/
+.serena/
+
+# generated files
+AGENTS.md
+AGENTS_symlink.md
+
 # misc files
 auth.json
 version.json
-
-AGENTS.md

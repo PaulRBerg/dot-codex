@@ -1,0 +1,10 @@
+{
+  "name": "@prb/dot-codex",
+  "description": "PRB's .codex directory.",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "devDependencies": {
+    "prettier": "^3.9.6"
+  }
+}

@@ -11,6 +11,9 @@ set unstable
 uv := require("uv")
 gitleaks := require("gitleaks")
 taplo := require("taplo")
+prettier := "bunx --no-install prettier"
+prettier_cache := ".cache/prettier/.prettier-cache"
+prettier_globs := "\"**/*.{md,json,jsonc,yaml,yml}\""
 
 # ---------------------------------------------------------------------------- #
 #                                   COMMANDS                                   #
@@ -18,6 +21,30 @@ taplo := require("taplo")
 
 @default:
     just build
+
+# Check documentation and configuration formatting.
+[group("checks")]
+@prettier-check +globs=prettier_globs:
+    {{ prettier }} \
+        --check \
+        --cache \
+        --cache-location {{ prettier_cache }} \
+        --log-level warn \
+        --no-error-on-unmatched-pattern \
+        {{ globs }}
+alias pc := prettier-check
+
+# Format documentation and configuration.
+[group("checks")]
+@prettier-write +globs=prettier_globs:
+    {{ prettier }} \
+        --write \
+        --cache \
+        --cache-location {{ prettier_cache }} \
+        --log-level warn \
+        --no-error-on-unmatched-pattern \
+        {{ globs }}
+alias pw := prettier-write
 
 # Check git history for leaked secrets; pass a git revision/range like `origin/main..HEAD`
 [group("checks")]
