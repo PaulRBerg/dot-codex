@@ -62,17 +62,24 @@ alias gls := gitleaks-staged
 
 # Check TOML formatting.
 [group("checks")]
-@toml-format-check:
-    {{ taplo }} format --check
+[positional-arguments]
+@toml-format-check *files:
+    {{ taplo }} format --check {{ files }}
 
 # Format TOML files in place.
 [group("checks")]
 @toml-format-write:
     {{ taplo }} format
 
-# Install tracked Git hooks for this repo.
+# Install Husky Git hooks for this checkout.
 @hooks-install:
-    git config core.hooksPath .githooks
+    bun run prepare
+
+# Run staged-file checks.
+[group("checks")]
+@pre-commit:
+    sh .husky/pre-commit
+alias precommit := pre-commit
 
 # Run the flatten script; accepts a `files` arg mirroring flatten.py
 [private]
