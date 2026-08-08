@@ -89,13 +89,13 @@ class TestSanitizePrompt(unittest.TestCase):
         self.assertEqual(hook.sanitize_prompt(long_line), "[Pasted]")
 
     def test_collapses_over_cap_prompt(self) -> None:
-        prompt = "\n".join(f"line{i}" for i in range(50))
+        prompt = "\n".join(f"line{i}" for i in range(hook.MAX_LINES + 1))
         result = hook.sanitize_prompt(prompt)
 
         self.assertTrue(result.endswith("[Pasted]"))
         self.assertIn("line0", result)
-        self.assertNotIn("line20", result)
-        self.assertNotIn("line49", result)
+        self.assertIn(f"line{hook.MAX_LINES - 1}", result)
+        self.assertNotIn(f"line{hook.MAX_LINES}", result)
 
     def test_squeezes_blank_lines(self) -> None:
         self.assertEqual(hook.sanitize_prompt("a\n\n\n\n\nb"), "a\n\nb")
