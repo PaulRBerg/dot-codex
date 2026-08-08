@@ -78,7 +78,7 @@ alias gls := gitleaks-staged
 # Run staged-file checks.
 [group("checks")]
 @pre-commit:
-    sh .husky/pre-commit
+    bash .husky/pre-commit
 alias precommit := pre-commit
 
 # Run the flatten script; accepts a `files` arg mirroring flatten.py
@@ -94,7 +94,9 @@ alias b := build
 
 # Run hook unit tests.
 @test-hooks:
-    {{ uv }} run python -m unittest hooks/UserPromptSubmit/copy_prompt_to_clipboard_test.py
+    {{ uv }} run python -m unittest \
+        hooks/UserPromptSubmit/copy_prompt_to_clipboard_test.py \
+        hooks/PreCommit/pre_commit_test.py
 
 # Run all tests.
 @test: test-hooks
