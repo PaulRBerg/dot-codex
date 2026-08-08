@@ -12,6 +12,7 @@ Personal `~/.codex` configuration and workflows for the Codex CLI.
 - `hooks/`: hook scripts and tests
 - `justfile`: automation for regenerating context
 - `helpers/flatten.py`: helper for flattening agent context
+- `helpers/codex-temp-clean`: guarded cleanup for agent-owned temporary directories
 - `rules/`: grouped Codex command approval rules
 - `prompts/`: prompt snippets
 - `sessions/`: saved sessions
@@ -26,6 +27,19 @@ just test
 
 Regenerates `AGENTS.md` by flattening `AGENTS_symlink.md` and appending `context/AGENTS_EXTRA.md`. Runs hook unit tests
 with stdlib `unittest`.
+
+## Temporary cleanup
+
+The tracked `helpers/codex-temp-clean` executable is available as soon as this repository is cloned into `~/.codex`; it
+requires no separate installation. Use it for recursive cleanup of uniquely named temporary fixtures:
+
+```bash
+fixture="$(mktemp -d "${TMPDIR:-/tmp}/codex-smoke.XXXXXX")"
+~/.codex/helpers/codex-temp-clean "$fixture"
+```
+
+The helper validates all targets before deleting any of them. Each target must be an absolute, non-symlinked,
+current-user-owned mode-`0700` directory named `codex-*` directly beneath `/tmp` or the macOS per-user temporary root.
 
 ## Hooks
 

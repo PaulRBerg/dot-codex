@@ -1,8 +1,8 @@
-# Prompt before recursive bulk deletion with `rm -r`/`rm -rf`; allow recoverable `trash`.
+# Prompt before raw recursive deletion; allow the guarded temp-cleanup helper and recoverable `trash`.
 prefix_rule(
     pattern = [["rm"], ["-rf", "-fr", "-r", "-R"]],
     decision = "prompt",
-    justification = "`rm -r`/`rm -rf` can irreversibly delete large trees; verify the target and prefer recoverable `trash -s` when appropriate.",
+    justification = "`rm -r`/`rm -rf` can irreversibly delete large trees; use `~/.codex/helpers/codex-temp-clean` for agent-owned temporary directories or recoverable `trash -s` when appropriate.",
     match = [
         "rm -rf dist",
         "rm -r tmp",
@@ -12,5 +12,20 @@ prefix_rule(
         "rm file.txt",
         "trash dist",
         "trash -s dist",
+    ],
+)
+
+# Allow the guarded helper when it is exposed on PATH; the helper validates every target before deletion.
+prefix_rule(
+    pattern = ["codex-temp-clean"],
+    decision = "allow",
+    justification = "`codex-temp-clean` only removes owned, mode-0700 `codex-*` directories directly beneath approved temporary roots.",
+    match = [
+        "codex-temp-clean /tmp/codex-smoke.ABC123",
+        "codex-temp-clean -- /tmp/codex-smoke.ABC123",
+    ],
+    not_match = [
+        "rm -rf /tmp/codex-smoke.ABC123",
+        "trash -s /tmp/codex-smoke.ABC123",
     ],
 )

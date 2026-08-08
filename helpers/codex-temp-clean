@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  printf 'Usage: codex-temp-clean DIRECTORY...\n' >&2
+  exit 2
+}
+
+fail() {
+  printf 'codex-temp-clean: %s\n' "$1" >&2
+  exit 1
+}
+
+canonical_dir() {
+  (cd -P -- "$1" && pwd -P)
+}
+
+owner_uid() {
+  if stat -f '%u' "$1" >/dev/null 2>&1; then
+    stat -f '%u' "$1"
+  else
+    stat -c '%u' "$1"
+  fi
+}
+
+directory_mode() {
+  if stat -f '%Lp' "$1" >/dev/null 2>&1; then
+    stat -f '%Lp' "$1"
+  else
+    stat -c '%a' "$1"
+  fi
+}
+
+if (($# == 0)); then
+  usage
+fi
+
+if [[ "$1" == "--" ]]; then
+  shift
+  (($# > 0)) || usage
+fi
+
+declare -a allowed_roots
+allowed_roots=("$(canonical_dir /tmp)")
+
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  darwin_tmp="$(getconf DARWIN_USER_TEMP_DIR)"
+  darwin_tmp="$(canonical_dir "$darwin_tmp")"
+  if [[ "$darwin_tmp" != "${allowed_roots[0]}" ]]; then
+    allowed_roots+=("$darwin_tmp")
+  fi
+fi
+
+current_uid="$(id -u)"
+declare -a targets=()
+
+for candidate in "$@"; do
+  [[ "$candidate" == /* ]] || fail "target must be an absolute path: $candidate"
+  [[ ! -L "$candidate" ]] || fail "refusing symbolic link: $candidate"
+  [[ -d "$candidate" ]] || fail "target is not a directory: $candidate"
+
+  target="$(canonical_dir "$candidate")"
+  basename="${target##*/}"
+  [[ "$basename" == codex-* ]] || fail "directory name must start with codex-: $candidate"
+
+  allowed=false
+  for root in "${allowed_roots[@]}"; do
+    if [[ "${target%/*}" == "$root" ]]; then
+      allowed=true
+      break
+    fi
+  done
+  [[ "$allowed" == true ]] || fail "target must be an immediate child of an approved temporary root: $candidate"
+
+  [[ "$(owner_uid "$target")" == "$current_uid" ]] || fail "target is not owned by the current user: $candidate"
+  [[ "$(directory_mode "$target")" == "700" ]] || fail "target permissions must be 0700: $candidate"
+
+  targets+=("$target")
+done
+
+for target in "${targets[@]}"; do
+  /bin/rm -rf "$target"
+  printf 'Removed %s\n' "$target"
+done
