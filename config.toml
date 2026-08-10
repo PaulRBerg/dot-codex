@@ -111,7 +111,7 @@ web_search = "live"
   trusted_hash = "sha256:ae92c5a2fac035fe51ed8005b28161429b21b9a60da1ab587b6765d75e095f08"
 
 [hooks.state."/Users/prb/projects/prb-finance/.codex/hooks.json:session_start:0:0"]
-  trusted_hash = "sha256:80f91f35fd37f039c9b8d688923932699dc5dd4c639db05bf3444f3530bf1605"
+  trusted_hash = "sha256:f64b46f9840bd9e66252b366b7f0067ff79a0a3887dea1ea8b001d5a8bf6d3de"
 
 [hooks.state."/Users/prb/.codex/hooks.json:post_tool_use:0:0"]
   trusted_hash = "sha256:92607b5469437fbdcfd2a72756c6aef18f9e16c51a77c91b9e9230f12b683ef1"
@@ -348,4 +348,7 @@ web_search = "live"
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/ai-commit"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/house-design"]
   trust_level = "trusted"
