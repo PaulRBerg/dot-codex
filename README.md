@@ -7,7 +7,7 @@ Personal `~/.codex` configuration and workflows for the Codex CLI.
 - `AGENTS.md`: canonical agent instructions (generated)
 - `AGENTS_symlink.md`: symlinked source for instructions
 - `context/AGENTS_EXTRA.md`: appended context injected into `AGENTS.md`
-- `config.toml`: tracked runtime configuration
+- `config.toml`: local runtime configuration (ignored)
 - `hooks.json`: tracked global Codex hooks
 - `hooks/`: hook scripts and tests
 - `justfile`: automation for regenerating context

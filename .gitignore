@@ -31,7 +31,8 @@ models_cache.json
 session_index.jsonl
 version.json
 
-# tracked config profiles
+# local config profiles
+config.toml
 *.config.toml
 
 # tracked hooks
