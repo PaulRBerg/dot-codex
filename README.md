@@ -50,7 +50,7 @@ Active hooks:
 - `hooks/UserPromptSubmit/copy_prompt_to_clipboard.py`: copies each submitted prompt to the macOS clipboard via
   `/usr/bin/pbcopy` so Raycast clipboard history keeps a searchable prompt log.
 - `ai-coord hook codex`: tracks Codex lifecycle, presence, work ownership, messages, and repository notes in the shared
-  [`ai-coord`](https://github.com/PaulRBerg/ai-coord) ledger used by Claude Code.
+  [`ai-coord`](https://github.com/PaulRBerg/agent-toolkit/tree/main/coord) ledger used by Claude Code.
 
 The clipboard hook sanitizes noisy prompt content before copying:
 
@@ -91,4 +91,4 @@ After adding or changing a non-managed hook, open `/hooks` in Codex CLI to revie
 
 - https://github.com/PaulRBerg/dot-claude
 - https://github.com/PaulRBerg/dot-gemini
-- https://github.com/PaulRBerg/ai-coord
+- https://github.com/PaulRBerg/agent-toolkit/tree/main/coord

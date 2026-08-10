@@ -313,9 +313,6 @@ web_search = "live"
 [projects."/Users/prb/sablier/devkit"]
   trust_level = "trusted"
 
-[projects."/Users/prb/projects/ai-notify"]
-  trust_level = "trusted"
-
 [projects."/Users/prb/projects/crypto-registry"]
   trust_level = "trusted"
 
@@ -337,16 +334,13 @@ web_search = "live"
 [projects."/Users/prb/pad/ghostty"]
   trust_level = "trusted"
 
-[projects."/Users/prb/projects/ai-coord"]
-  trust_level = "trusted"
-
 [projects."/Users/prb/projects/routemesh-cli"]
   trust_level = "trusted"
 
 [projects."/Users/prb/work/templates/rust-template"]
   trust_level = "trusted"
 
-[projects."/Users/prb/projects/ai-commit"]
+[projects."/Users/prb/projects/agent-toolkit"]
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/house-design"]
