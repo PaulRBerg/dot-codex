@@ -7,7 +7,7 @@
 #                                   General                                    #
 # ---------------------------------------------------------------------------- #
 
-approval_policy = { granular = { mcp_elicitations = false, request_permissions = false, rules = true, sandbox_approval = false, skill_approval = false } }
+approval_policy = "never"
 approvals_reviewer = "auto_review"
 check_for_update_on_startup = true
 model = "gpt-5.6-sol"
