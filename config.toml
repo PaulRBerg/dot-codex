@@ -345,3 +345,6 @@ web_search = "live"
 
 [projects."/Users/prb/projects/house-design"]
   trust_level = "trusted"
+
+[projects."/Users/prb/work/service-ops"]
+  trust_level = "trusted"
