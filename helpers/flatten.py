@@ -7,10 +7,10 @@ See https://github.com/openai/agents.md/issues/11#issuecomment-3366858928
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import textwrap
 from pathlib import Path
-import re
 from typing import Tuple
 
 REF_PATTERN = re.compile(
@@ -62,13 +62,19 @@ def build_output_path(source: Path) -> Path:
     return source.with_name(f"{source.stem}_flattened{suffix}")
 
 
-def process_file(path: Path, dry_run: bool) -> None:
+def process_file(path: Path, dry_run: bool, output: Path | None = None) -> None:
+    output_path = output or build_output_path(path)
+    if not dry_run:
+        same_path = output_path.resolve() == path.resolve()
+        same_file = output_path.exists() and path.exists() and output_path.samefile(path)
+        if same_path or same_file:
+            raise ValueError(f"refusing to overwrite input file: {path}")
+
     flattened = flatten_file(path)
     if dry_run:
         sys.stdout.write(flattened)
         return
 
-    output_path = build_output_path(path)
     output_path.write_text(flattened, encoding="utf-8")
 
 
@@ -80,21 +86,32 @@ def main(argv: list[str] | None = None) -> int:
         "files",
         nargs="*",
         type=Path,
-        default=[Path("AGENTS_symlink.md")],
-        help="Files to process in place.",
+        help="Input files to flatten.",
     )
-    parser.add_argument(
+    output_group = parser.add_mutually_exclusive_group()
+    output_group.add_argument(
         "--dry-run",
         action="store_true",
         help="Print flattened content to stdout instead of writing a file (single file only).",
     )
+    output_group.add_argument(
+        "--output",
+        type=Path,
+        help="Write one flattened input to this path.",
+    )
     args = parser.parse_args(argv)
+    files = args.files or [Path("AGENTS_symlink.md")]
 
-    if args.dry_run and len(args.files) != 1:
+    if args.dry_run and len(files) != 1:
         parser.error("--dry-run requires exactly one input file")
+    if args.output is not None and len(args.files) != 1:
+        parser.error("--output requires exactly one input file")
 
-    for file_path in args.files:
-        process_file(file_path, dry_run=args.dry_run)
+    for file_path in files:
+        try:
+            process_file(file_path, dry_run=args.dry_run, output=args.output)
+        except ValueError as error:
+            parser.error(str(error))
 
     return 0
 

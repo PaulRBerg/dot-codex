@@ -86,9 +86,9 @@ alias precommit := pre-commit
 @flatten files="AGENTS_symlink.md" *args:
     {{ uv }} run python ~/.codex/helpers/flatten.py {{ files }} {{ args }}
 
-# Build AGENTS.md by flattening and appending extra context.
-@build:
-    just flatten
+# Build AGENTS.md from an optional source and append extra context.
+@build source="AGENTS_symlink.md":
+    just flatten {{ source }} --output AGENTS.md
     cat context/AGENTS_EXTRA.md >> AGENTS.md
 alias b := build
 
@@ -98,5 +98,9 @@ alias b := build
         hooks/UserPromptSubmit/copy_prompt_to_clipboard_test.py \
         hooks/PreCommit/pre_commit_test.py
 
+# Run flatten helper unit tests.
+@test-flatten:
+    {{ uv }} run python -m unittest helpers/flatten_test.py
+
 # Run all tests.
-@test: test-hooks
+@test: test-hooks test-flatten
