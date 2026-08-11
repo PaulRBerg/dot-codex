@@ -1,5 +1,5 @@
 #!/usr/bin/env -S uv run python
-"""Integration tests for the isolated-index pre-commit validation path."""
+"""Integration tests for staged-snapshot pre-commit validation."""
 
 from __future__ import annotations
 
@@ -45,21 +45,25 @@ class PreCommitHookTest(unittest.TestCase):
         self._write(".prettierignore", "")
         self._write("taplo.toml", "")
         self._write_tool("just", JUST_STUB)
-        self._write_tool("bun", BUN_STUB)
         self._write_tool("bunx", BUNX_STUB)
         self._write_tool("taplo", TAPLO_STUB)
 
-    def test_default_index_partial_stage_is_rejected(self) -> None:
+    def test_default_index_validates_staged_snapshot_and_preserves_shared_state(self) -> None:
         self._write("docs/note.md", "# Intended\n")
         self._git("add", "docs/note.md")
-        self._write("docs/note.md", "# Intended\nUnrelated worktree bytes.\n")
+        index_before = (self.repo / ".git" / "index").read_bytes()
+        worktree_contents = "# UNFORMATTED\n"
+        self._write("docs/note.md", worktree_contents)
 
         result = self._run_hook()
 
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("error: partially staged files are unsafe in the shared worktree:", result.stderr)
-        self.assertIn("docs/note.md", result.stderr)
-        self.assertFalse(self.tool_log.exists())
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.repo / "docs" / "note.md").read_text(), worktree_contents)
+        self.assertEqual((self.repo / ".git" / "index").read_bytes(), index_before)
+        tool_log = self.tool_log.read_text()
+        self.assertIn("just-index:\n", tool_log)
+        self.assertIn("bunx-arg:docs/note.md\n", tool_log)
+        self._assert_no_snapshots_remain()
 
     def test_alternate_index_validates_snapshot_and_preserves_shared_state(self) -> None:
         self._write("shared-stage.txt", "Unrelated shared staging.\n")
@@ -83,7 +87,6 @@ class PreCommitHookTest(unittest.TestCase):
         self.assertIn(f"just-index:{alternate_index}\n", tool_log)
         self.assertIn("bunx-arg:docs/note.md\n", tool_log)
         self.assertIn("bunx-arg:docs/name with spaces.md\n", tool_log)
-        self.assertNotIn("bun:run lint-staged", tool_log)
         self._assert_no_snapshots_remain()
 
     def test_unformatted_markdown_snapshot_fails_without_changing_worktree(self) -> None:
@@ -124,7 +127,7 @@ class PreCommitHookTest(unittest.TestCase):
         self.assertNotIn("bunx-arg:", tool_log)
         self._assert_no_snapshots_remain()
 
-    def test_fully_staged_file_uses_lint_staged_branch(self) -> None:
+    def test_fully_staged_file_uses_snapshot_validation(self) -> None:
         self._write("docs/note.md", "# Fully staged\n")
         self._git("add", "docs/note.md")
 
@@ -133,8 +136,18 @@ class PreCommitHookTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         tool_log = self.tool_log.read_text()
         self.assertIn("just-index:\n", tool_log)
-        self.assertIn("bun:run lint-staged\n", tool_log)
-        self.assertNotIn("bunx-arg:", tool_log)
+        self.assertIn("bunx-arg:docs/note.md\n", tool_log)
+        self._assert_no_snapshots_remain()
+
+    def test_deletion_only_commit_runs_gitleaks_without_formatters(self) -> None:
+        (self.repo / "docs" / "note.md").unlink()
+        self._git("add", "docs/note.md")
+
+        result = self._run_hook()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.tool_log.read_text(), "just-index:\n")
+        self._assert_no_snapshots_remain()
 
     def _alternate_index(self) -> Path:
         alternate_index = self.repo / "alternate.index"
@@ -191,11 +204,6 @@ class PreCommitHookTest(unittest.TestCase):
 JUST_STUB = """#!/bin/sh
 printf 'just-index:%s\\n' "${GIT_INDEX_FILE-}" >> "$TOOL_LOG"
 exit "${GITLEAKS_EXIT:-0}"
-"""
-
-BUN_STUB = """#!/bin/sh
-printf 'bun:%s\\n' "$*" >> "$TOOL_LOG"
-exit "${BUN_EXIT:-0}"
 """
 
 BUNX_STUB = """#!/bin/sh

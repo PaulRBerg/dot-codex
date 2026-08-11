@@ -3,127 +3,69 @@ exec bash -s -- "$@" <<'BASH'
 
 set -euo pipefail
 
-canonical_path() {
-  local candidate=$1
-  local directory
-
-  if [[ $candidate != /* ]]; then
-    candidate="$PWD/$candidate"
-  fi
-
-  directory=$(cd -P -- "$(dirname -- "$candidate")" && pwd -P)
-  printf '%s/%s\n' "$directory" "$(basename -- "$candidate")"
-}
-
 repo_root=$(cd -P -- "$(git rev-parse --show-toplevel)" && pwd -P)
-git_dir=$(git rev-parse --absolute-git-dir)
-default_index=$(canonical_path "$git_dir/index")
-alternate_index=false
-if [[ -n ${GIT_INDEX_FILE:-} ]] && [[ $(canonical_path "$GIT_INDEX_FILE") != "$default_index" ]]; then
-  alternate_index=true
-fi
-
 mapfile -d '' -t staged_paths < <(git diff --cached --name-only -z)
 if ((${#staged_paths[@]} == 0)); then
   exit 0
 fi
 
-# lint-staged can only preserve partially staged files by rewriting Git or
-# worktree state. Shared worktrees require whole-file staging instead.
-partially_staged=()
-for file in "${staged_paths[@]}"; do
-  if ! git diff --quiet -- "$file"; then
-    partially_staged+=("$file")
-  fi
-done
-
-if ((${#partially_staged[@]} > 0)) && [[ $alternate_index == false ]]; then
-  printf 'error: partially staged files are unsafe in the shared worktree:\n' >&2
-  printf '%s\n' "${partially_staged[@]}" >&2
-  exit 1
-fi
-
 just gitleaks-staged
 
-if ((${#partially_staged[@]} > 0)) && [[ $alternate_index == true ]]; then
-  snapshot_dir=''
-
-  # shellcheck disable=SC2329 # Invoked by the EXIT trap below.
-  cleanup_snapshot() {
-    local hook_rc=$?
-
-    trap - EXIT HUP INT TERM
-    if [[ -n $snapshot_dir && -d $snapshot_dir ]]; then
-      if ! "$repo_root/helpers/codex-temp-clean" -- "$snapshot_dir"; then
-        printf 'error: failed to remove pre-commit snapshot: %s\n' "$snapshot_dir" >&2
-      fi
-    fi
-    exit "$hook_rc"
-  }
-
-  trap cleanup_snapshot EXIT
-  trap 'exit 129' HUP
-  trap 'exit 130' INT
-  trap 'exit 143' TERM
-
-  snapshot_dir=$(umask 077 && mktemp -d "${TMPDIR:-/tmp}/codex-precommit.XXXXXX")
-  chmod 700 "$snapshot_dir"
-
-  mapfile -d '' -t snapshot_paths < <(git diff --cached --name-only -z --diff-filter=ACMR)
-  if ((${#snapshot_paths[@]} > 0)); then
-    git checkout-index --prefix="$snapshot_dir/" -- "${snapshot_paths[@]}"
-  fi
-
-  prettier_paths=()
-  toml_paths=()
-  for file in "${snapshot_paths[@]}"; do
-    case "$file" in
-    *.md | *.json | *.jsonc | *.yaml | *.yml) prettier_paths+=("$file") ;;
-    *.toml) toml_paths+=("$file") ;;
-    esac
-  done
-
-  if ((${#prettier_paths[@]} > 0)); then
-    (
-      cd -- "$snapshot_dir"
-      bunx --no-install prettier --check --config "$repo_root/.prettierrc.yml" --ignore-path "$repo_root/.prettierignore" \
-        --no-error-on-unmatched-pattern "${prettier_paths[@]}"
-    )
-  fi
-
-  if ((${#toml_paths[@]} > 0)); then
-    (
-      cd -- "$snapshot_dir"
-      taplo format --check --config "$repo_root/taplo.toml" "${toml_paths[@]}"
-    )
-  fi
-
+mapfile -d '' -t snapshot_paths < <(git diff --cached --name-only -z --diff-filter=ACMR)
+if ((${#snapshot_paths[@]} == 0)); then
   exit 0
 fi
 
-attempt=1
-while :; do
-  if lint_staged_output=$(bun run lint-staged 2>&1); then
-    printf '%s\n' "$lint_staged_output"
-    exit 0
-  else
-    lint_staged_rc=$?
-  fi
-
-  case "$lint_staged_output" in
-  *'Failed to get staged files'*) ;;
-  *)
-    printf '%s\n' "$lint_staged_output"
-    exit "$lint_staged_rc"
-    ;;
+prettier_paths=()
+toml_paths=()
+for file in "${snapshot_paths[@]}"; do
+  case "$file" in
+  *.md | *.json | *.jsonc | *.yaml | *.yml) prettier_paths+=("$file") ;;
+  *.toml) toml_paths+=("$file") ;;
   esac
-
-  if [ "$attempt" -ge 3 ]; then
-    printf '%s\n' "$lint_staged_output"
-    exit "$lint_staged_rc"
-  fi
-
-  sleep "$attempt"
-  attempt=$((attempt + 1))
 done
+
+format_paths=("${prettier_paths[@]}" "${toml_paths[@]}")
+if ((${#format_paths[@]} == 0)); then
+  exit 0
+fi
+
+snapshot_dir=''
+
+# shellcheck disable=SC2329 # Invoked by the EXIT trap below.
+cleanup_snapshot() {
+  local hook_rc=$?
+
+  trap - EXIT HUP INT TERM
+  if [[ -n $snapshot_dir && -d $snapshot_dir ]]; then
+    if ! "$repo_root/helpers/codex-temp-clean" -- "$snapshot_dir"; then
+      printf 'error: failed to remove pre-commit snapshot: %s\n' "$snapshot_dir" >&2
+    fi
+  fi
+  exit "$hook_rc"
+}
+
+trap cleanup_snapshot EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+snapshot_dir=$(umask 077 && mktemp -d "${TMPDIR:-/tmp}/codex-precommit.XXXXXX")
+chmod 700 "$snapshot_dir"
+git checkout-index --prefix="$snapshot_dir/" -- "${format_paths[@]}"
+
+if ((${#prettier_paths[@]} > 0)); then
+  (
+    cd -- "$snapshot_dir"
+    bunx --no-install prettier --check --config "$repo_root/.prettierrc.yml" --ignore-path "$repo_root/.prettierignore" \
+      --no-error-on-unmatched-pattern "${prettier_paths[@]}"
+  )
+fi
+
+if ((${#toml_paths[@]} > 0)); then
+  (
+    cd -- "$snapshot_dir"
+    taplo format --check --config "$repo_root/taplo.toml" "${toml_paths[@]}"
+  )
+fi
 BASH
