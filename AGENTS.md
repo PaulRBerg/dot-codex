@@ -40,6 +40,8 @@ complexity.
 - Stay on the current branch. Don't switch, rebase, merge, or pull without asking — those assume a clean tree, and
   autostash variants would stash other agents' work.
 - On a git `index.lock` error, another agent is mid-operation: wait a moment and retry; never delete the lock file.
+  lint-staged failing with `Failed to get staged files` during another agent's commit is the same transient index
+  contention: wait briefly and retry before treating it as a real hook failure.
 - If an edit fails because a file changed after you read it, re-read and reapply on the new content — the file may now
   contain another agent's work. Never force-overwrite a whole file to win the race.
 - Never act on a shared stash by ordinal (`stash@{0}`) — another agent's operation can shift it between your read and
@@ -76,6 +78,9 @@ coverage, so `ai-coord status` is optional diagnostics when blocked or for cross
 `READY` authorizes editing. Follow the one-sentence guidance each command prints, and run `ai-coord done` as soon as
 work completes.
 
+- A case-sensitive, whitespace-trimmed prompt line exactly equal to `#noc` waives `draft`, `start`, `wait`, and `done`
+  for that prompt. If work may write, re-enter the gate with `draft` or `start` before editing; the next valid untagged
+  prompt restores normal gate behavior.
 - On blocked or dirty-settling results, run `ai-coord wait`; Claude sessions also receive a background waker. Every wake
   still requires a fresh `start` returning `READY`; never use manual sleep/retry loops.
 - In plan mode, record stabilized scopes with `ai-coord draft '<label>' '<path>'...`; never put exhaustive paths in the
