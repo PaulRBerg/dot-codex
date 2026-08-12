@@ -29,6 +29,7 @@ history.jsonl
 installation_id
 models_cache.json
 session_index.jsonl
+transcription-history.jsonl
 version.json
 
 # local config profiles
@@ -40,6 +41,5 @@ config.toml
 !hooks/**
 
 # Python artifacts
-__pycache__/
 *.py[cod]
 hooks/**/.debug.jsonl
