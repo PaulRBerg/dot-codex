@@ -4,6 +4,8 @@ set allow-duplicate-variables
 set shell := ["bash", "-euo", "pipefail", "-c"]
 set unstable
 
+export RUST_LOG := "warn"
+
 # ---------------------------------------------------------------------------- #
 #                                 DEPENDENCIES                                 #
 # ---------------------------------------------------------------------------- #

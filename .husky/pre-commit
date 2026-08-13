@@ -65,7 +65,7 @@ fi
 if ((${#toml_paths[@]} > 0)); then
   (
     cd -- "$snapshot_dir"
-    taplo format --check --config "$repo_root/taplo.toml" "${toml_paths[@]}"
+    RUST_LOG=warn taplo format --check --config "$repo_root/taplo.toml" "${toml_paths[@]}"
   )
 fi
 BASH
