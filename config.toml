@@ -64,9 +64,9 @@ notify = [
 # ---------------------------------------------------------------------------- #
 [features]
   apps = false
-  browser_use = true
-  browser_use_external = true
-  browser_use_full_cdp_access = true
+  browser_use = false
+  browser_use_external = false
+  browser_use_full_cdp_access = false
   computer_use = true
   default_mode_request_user_input = true
   image_generation = true
