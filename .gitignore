@@ -33,7 +33,6 @@ transcription-history.jsonl
 version.json
 
 # local config profiles
-config.toml
 *.config.toml
 
 # tracked hooks
