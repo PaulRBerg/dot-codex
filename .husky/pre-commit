@@ -4,6 +4,8 @@ exec bash -s -- "$@" <<'BASH'
 set -euo pipefail
 
 repo_root=$(cd -P -- "$(git rev-parse --show-toplevel)" && pwd -P)
+codex_home=${CODEX_HOME:-"${HOME}/.codex"}
+codex_home=$(cd -P -- "$codex_home" && pwd -P)
 mapfile -d '' -t staged_paths < <(git diff --cached --name-only -z)
 if ((${#staged_paths[@]} == 0)); then
   exit 0
@@ -12,9 +14,13 @@ fi
 just gitleaks-staged
 
 mapfile -d '' -t snapshot_paths < <(git diff --cached --name-only -z --diff-filter=ACMR)
-if ((${#snapshot_paths[@]} == 0)); then
-  exit 0
-fi
+
+trust_inputs_changed=false
+for file in "${staged_paths[@]}"; do
+  case "$file" in
+  config.toml | hooks.json) trust_inputs_changed=true ;;
+  esac
+done
 
 prettier_paths=()
 toml_paths=()
@@ -26,8 +32,25 @@ for file in "${snapshot_paths[@]}"; do
 done
 
 format_paths=("${prettier_paths[@]}" "${toml_paths[@]}")
-if ((${#format_paths[@]} == 0)); then
+if ((${#format_paths[@]} == 0)) && [[ $trust_inputs_changed == false ]]; then
   exit 0
+fi
+
+declare -A snapshot_seen=()
+snapshot_inputs=()
+for file in "${format_paths[@]}"; do
+  if [[ -z ${snapshot_seen[$file]+present} ]]; then
+    snapshot_inputs+=("$file")
+    snapshot_seen[$file]=1
+  fi
+done
+if [[ $trust_inputs_changed == true ]]; then
+  for file in config.toml hooks.json; do
+    if git cat-file -e ":$file" 2>/dev/null && [[ -z ${snapshot_seen[$file]+present} ]]; then
+      snapshot_inputs+=("$file")
+      snapshot_seen[$file]=1
+    fi
+  done
 fi
 
 snapshot_dir=''
@@ -52,7 +75,9 @@ trap 'exit 143' TERM
 
 snapshot_dir=$(umask 077 && mktemp -d "${TMPDIR:-/tmp}/codex-precommit.XXXXXX")
 chmod 700 "$snapshot_dir"
-git checkout-index --prefix="$snapshot_dir/" -- "${format_paths[@]}"
+if ((${#snapshot_inputs[@]} > 0)); then
+  git checkout-index --prefix="$snapshot_dir/" -- "${snapshot_inputs[@]}"
+fi
 
 if ((${#prettier_paths[@]} > 0)); then
   (
@@ -67,5 +92,11 @@ if ((${#toml_paths[@]} > 0)); then
     cd -- "$snapshot_dir"
     RUST_LOG=warn taplo format --check --config "$repo_root/taplo.toml" "${toml_paths[@]}"
   )
+fi
+
+if [[ $trust_inputs_changed == true ]]; then
+  uv run python "$repo_root/hooks/PreCommit/check_codex_hook_trust.py" \
+    --snapshot-home "$snapshot_dir" \
+    --canonical-home "$codex_home"
 fi
 BASH
