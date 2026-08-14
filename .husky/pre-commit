@@ -1,102 +1,47 @@
 #!/usr/bin/env sh
-exec bash -s -- "$@" <<'BASH'
+set -e
 
-set -euo pipefail
-
-repo_root=$(cd -P -- "$(git rev-parse --show-toplevel)" && pwd -P)
-codex_home=${CODEX_HOME:-"${HOME}/.codex"}
-codex_home=$(cd -P -- "$codex_home" && pwd -P)
-mapfile -d '' -t staged_paths < <(git diff --cached --name-only -z)
-if ((${#staged_paths[@]} == 0)); then
+staged=$(git diff --cached --name-only)
+if [ -z "$staged" ]; then
   exit 0
 fi
 
-just gitleaks-staged
-
-mapfile -d '' -t snapshot_paths < <(git diff --cached --name-only -z --diff-filter=ACMR)
-
-trust_inputs_changed=false
-for file in "${staged_paths[@]}"; do
-  case "$file" in
-  config.toml | hooks.json) trust_inputs_changed=true ;;
-  esac
-done
-
-prettier_paths=()
-toml_paths=()
-for file in "${snapshot_paths[@]}"; do
-  case "$file" in
-  *.md | *.json | *.jsonc | *.yaml | *.yml) prettier_paths+=("$file") ;;
-  *.toml) toml_paths+=("$file") ;;
-  esac
-done
-
-format_paths=("${prettier_paths[@]}" "${toml_paths[@]}")
-if ((${#format_paths[@]} == 0)) && [[ $trust_inputs_changed == false ]]; then
-  exit 0
-fi
-
-declare -A snapshot_seen=()
-snapshot_inputs=()
-for file in "${format_paths[@]}"; do
-  if [[ -z ${snapshot_seen[$file]+present} ]]; then
-    snapshot_inputs+=("$file")
-    snapshot_seen[$file]=1
+# lint-staged can only preserve partially staged files by rewriting Git or
+# worktree state. Shared worktrees require whole-file staging instead.
+partially_staged=$(printf '%s\n' "$staged" | while IFS= read -r file; do
+  if ! git diff --quiet -- "$file"; then
+    printf '%s\n' "$file"
   fi
-done
-if [[ $trust_inputs_changed == true ]]; then
-  for file in config.toml hooks.json; do
-    if git cat-file -e ":$file" 2>/dev/null && [[ -z ${snapshot_seen[$file]+present} ]]; then
-      snapshot_inputs+=("$file")
-      snapshot_seen[$file]=1
-    fi
-  done
+done)
+if [ -n "$partially_staged" ]; then
+  printf 'error: partially staged files are unsafe in the shared worktree:\n%s\n' "$partially_staged" >&2
+  exit 1
 fi
 
-snapshot_dir=''
+uv run python hooks/PreCommit/check_codex_hook_trust.py
 
-# shellcheck disable=SC2329 # Invoked by the EXIT trap below.
-cleanup_snapshot() {
-  local hook_rc=$?
-
-  trap - EXIT HUP INT TERM
-  if [[ -n $snapshot_dir && -d $snapshot_dir ]]; then
-    if ! "$repo_root/helpers/codex-temp-clean" -- "$snapshot_dir"; then
-      printf 'error: failed to remove pre-commit snapshot: %s\n' "$snapshot_dir" >&2
-    fi
+attempt=1
+while :; do
+  if lint_staged_output=$(bun run lint-staged 2>&1); then
+    printf '%s\n' "$lint_staged_output"
+    exit 0
+  else
+    lint_staged_rc=$?
   fi
-  exit "$hook_rc"
-}
 
-trap cleanup_snapshot EXIT
-trap 'exit 129' HUP
-trap 'exit 130' INT
-trap 'exit 143' TERM
+  case "$lint_staged_output" in
+    *'Failed to get staged files'*) ;;
+    *)
+      printf '%s\n' "$lint_staged_output"
+      exit "$lint_staged_rc"
+      ;;
+  esac
 
-snapshot_dir=$(umask 077 && mktemp -d "${TMPDIR:-/tmp}/codex-precommit.XXXXXX")
-chmod 700 "$snapshot_dir"
-if ((${#snapshot_inputs[@]} > 0)); then
-  git checkout-index --prefix="$snapshot_dir/" -- "${snapshot_inputs[@]}"
-fi
+  if [ "$attempt" -ge 3 ]; then
+    printf '%s\n' "$lint_staged_output"
+    exit "$lint_staged_rc"
+  fi
 
-if ((${#prettier_paths[@]} > 0)); then
-  (
-    cd -- "$snapshot_dir"
-    bunx --no-install prettier --check --config "$repo_root/.prettierrc.yml" --ignore-path "$repo_root/.prettierignore" \
-      --no-error-on-unmatched-pattern "${prettier_paths[@]}"
-  )
-fi
-
-if ((${#toml_paths[@]} > 0)); then
-  (
-    cd -- "$snapshot_dir"
-    RUST_LOG=warn taplo format --check --config "$repo_root/taplo.toml" "${toml_paths[@]}"
-  )
-fi
-
-if [[ $trust_inputs_changed == true ]]; then
-  uv run python "$repo_root/hooks/PreCommit/check_codex_hook_trust.py" \
-    --snapshot-home "$snapshot_dir" \
-    --canonical-home "$codex_home"
-fi
-BASH
+  sleep "$attempt"
+  attempt=$((attempt + 1))
+done

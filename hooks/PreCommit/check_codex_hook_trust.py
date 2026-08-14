@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 import os
 import selectors
@@ -18,17 +17,11 @@ from typing import Any
 
 APP_SERVER_TIMEOUT_SECONDS = 10
 MAX_RESPONSE_BYTES = 1024 * 1024
+TRUST_INPUTS = ("config.toml", "hooks.json")
 
 
 class TrustCheckError(RuntimeError):
     """A failure that prevents proving the staged trust state is current."""
-
-
-def parse_arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--snapshot-home", type=Path, required=True)
-    parser.add_argument("--canonical-home", type=Path, required=True)
-    return parser.parse_args()
 
 
 def split_hook_key(key: str) -> tuple[Path, str]:
@@ -226,12 +219,63 @@ def stale_provisions(snapshot_home: Path, canonical_home: Path) -> list[str]:
     return sorted(key for key in provisions if normalized_state_key(key) not in discovered)
 
 
-def main() -> int:
-    arguments = parse_arguments()
-    snapshot_home = arguments.snapshot_home.resolve()
-    canonical_home = arguments.canonical_home.resolve()
+def run_git(*arguments: str) -> subprocess.CompletedProcess[str]:
     try:
-        stale = stale_provisions(snapshot_home, canonical_home)
+        return subprocess.run(
+            ["git", *arguments],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+    except OSError as error:
+        raise TrustCheckError(f"could not run git: {error}") from error
+
+
+def trust_inputs_changed() -> bool:
+    result = run_git("diff", "--cached", "--quiet", "--", *TRUST_INPUTS)
+    if result.returncode == 0:
+        return False
+    if result.returncode == 1:
+        return True
+    detail = result.stderr.strip()
+    suffix = f": {detail}" if detail else ""
+    raise TrustCheckError(f"could not inspect staged Codex hook trust inputs{suffix}")
+
+
+def staged_inputs() -> list[str]:
+    inputs = []
+    for filename in TRUST_INPUTS:
+        result = run_git("ls-files", "--cached", "--error-unmatch", "--", filename)
+        if result.returncode == 0:
+            inputs.append(filename)
+        elif result.returncode != 1:
+            detail = result.stderr.strip()
+            suffix = f": {detail}" if detail else ""
+            raise TrustCheckError(f"could not inspect staged {filename}{suffix}")
+    return inputs
+
+
+def check_staged_provisions(canonical_home: Path) -> list[str]:
+    if not trust_inputs_changed():
+        return []
+
+    with tempfile.TemporaryDirectory(prefix="codex-precommit.") as snapshot_name:
+        snapshot_home = Path(snapshot_name).resolve()
+        snapshot_home.chmod(0o700)
+        inputs = staged_inputs()
+        if inputs:
+            result = run_git("checkout-index", f"--prefix={snapshot_home}/", "--", *inputs)
+            if result.returncode != 0:
+                detail = result.stderr.strip()
+                suffix = f": {detail}" if detail else ""
+                raise TrustCheckError(f"could not create staged Codex hook trust snapshot{suffix}")
+        return stale_provisions(snapshot_home, canonical_home)
+
+
+def main() -> int:
+    canonical_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).resolve()
+    try:
+        stale = check_staged_provisions(canonical_home)
     except TrustCheckError as error:
         print(f"error: could not validate staged Codex hook trust state: {error}", file=sys.stderr)
         return 1
