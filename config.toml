@@ -203,13 +203,11 @@ notify = [
 [plugins."computer-use@openai-bundled"]
   enabled = true
 
-# ---------------------------------------------------------------------------- #
-#                               Plugins Disabled                               #
-# ---------------------------------------------------------------------------- #
-[plugins."sites@openai-bundled"]
-  enabled = false
+  # ---------------------------------------------------------------------------- #
+  #                               Plugins Disabled                               #
+  # ---------------------------------------------------------------------------- #
 
-[plugins."visualize@openai-bundled"]
+[plugins."browser@openai-bundled"]
   enabled = false
 
 [plugins."documents@openai-primary-runtime"]
@@ -226,9 +224,11 @@ notify = [
 
 [plugins."template-creator@openai-primary-runtime"]
   enabled = false
+[plugins."sites@openai-bundled"]
+  enabled = false
 
-[plugins."browser@openai-bundled"]
-  enabled = true
+[plugins."visualize@openai-bundled"]
+  enabled = false
 
 # ---------------------------------------------------------------------------- #
 #                              Shell Environment                               #
