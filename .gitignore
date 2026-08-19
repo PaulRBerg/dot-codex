@@ -9,6 +9,7 @@ log/
 mcp-oauth-locks/
 thread-writer-locks/
 node_modules/
+node_repl/
 packages/
 plugins/
 sessions/
