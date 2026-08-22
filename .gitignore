@@ -1,6 +1,8 @@
 # directories
 .cache/
 .tmp/
+app-server-control/
+app-server-daemon/
 archived_sessions/
 cache/
 computer-use/
