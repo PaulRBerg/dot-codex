@@ -143,12 +143,11 @@ notify = [
 [marketplaces]
 
 [marketplaces.openai-bundled]
-  last_updated = "2026-09-03T14:18:12Z"
   source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
   source_type = "local"
 
 [marketplaces.openai-primary-runtime]
-  last_updated = "2026-08-19T11:23:29Z"
+  last_updated = "2026-09-04T20:04:56Z"
   source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
   source_type = "local"
 
@@ -172,10 +171,11 @@ notify = [
 [mcp_servers.node_repl.env]
   BROWSER_USE_AVAILABLE_BACKENDS = ""
   BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-  BROWSER_USE_CODEX_APP_VERSION = "26.814.41407"
+  BROWSER_USE_CODEX_APP_VERSION = "26.901.31953"
+  BROWSER_USE_TINYSKY_ENABLED = "1"
   CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
   CODEX_HOME = "/Users/prb/.codex"
-  NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = "Control desktop apps on macOS through Computer Use."
+  NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = ""
   NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
   NODE_REPL_NODE_MODULE_DIRS = "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
   NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
@@ -227,6 +227,9 @@ notify = [
 
 [plugins."visualize@openai-bundled"]
   enabled = false
+
+[plugins."unified-computer-use@openai-bundled"]
+  enabled = true
 
 
 # ---------------------------------------------------------------------------- #
