@@ -143,7 +143,7 @@ notify = [
 [marketplaces]
 
 [marketplaces.openai-bundled]
-  last_updated = "2026-08-19T11:22:56Z"
+  last_updated = "2026-09-03T14:18:12Z"
   source = "/Users/prb/.codex/.tmp/bundled-marketplaces/openai-bundled"
   source_type = "local"
 
