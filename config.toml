@@ -81,6 +81,9 @@ notify = [
   tool_suggest = false
   unified_exec = true
 
+[features.context_management]
+  experimental_mode = true
+
 [features.multi_agent_v2]
   enabled = true
   expose_spawn_agent_model_overrides = true
