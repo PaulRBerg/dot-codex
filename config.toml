@@ -147,7 +147,6 @@ notify = [
   source_type = "local"
 
 [marketplaces.openai-primary-runtime]
-  last_updated = "2026-09-04T20:04:56Z"
   source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
   source_type = "local"
 
@@ -436,9 +435,6 @@ notify = [
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/home-control"]
-  trust_level = "trusted"
-
-[projects."/private/tmp/codex-coord-identity-live.J18t37"]
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/prb-house"]
