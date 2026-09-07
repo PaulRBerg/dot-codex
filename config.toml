@@ -282,6 +282,74 @@ notify = [
 
 [[skills.config]]
   enabled = false
+  name = "openai-templates:artifact-template-experiment-analysis"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-financial-budget"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-investment-committee-memo"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-legal-memorandum"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-market-trends-report"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-minimal-letterhead"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-operating-calendar"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-operating-review"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-project-kickoff"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-project-tracker"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-sales-pipeline"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-simple-dark-mode"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-simple-light-mode"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-strategy-memorandum"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-system-design"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-team-alignment"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-three-statement-forecast"
+
+[[skills.config]]
+  enabled = false
   name = "deep-research-work:deep-research"
 
 # ---------------------------------------------------------------------------- #
