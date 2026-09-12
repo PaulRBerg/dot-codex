@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+"""Keep the computer-use MCP runtime outside the CLI's terminal session."""
+
+import os
+import signal
+import subprocess
+import sys
+
+
+def main():
+    if len(sys.argv) < 2:
+        raise SystemExit("usage: cua-repl COMMAND [ARG ...]")
+
+    child = subprocess.Popen(sys.argv[1:], start_new_session=True)
+
+    def forward_signal(signum, _frame):
+        try:
+            os.killpg(child.pid, signum)
+        except ProcessLookupError:
+            pass
+
+    for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(signum, forward_signal)
+
+    result = child.wait()
+    return result if result >= 0 else 128 - result
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -28,6 +28,20 @@ just test
 Regenerates `AGENTS.md` by flattening `AGENTS_symlink.md` and appending `context/AGENTS_EXTRA.md`. Runs hook unit tests
 with stdlib `unittest`.
 
+## Computer use
+
+`config.toml` explicitly configures `cua_repl` using the runtime bundled with `/Applications/ChatGPT.app` and the
+installed `~/.codex/computer-use/Codex Computer Use.app` service. Native app access still requires the service's normal
+macOS and application permissions.
+
+`helpers/cua-repl` launches the MCP runtime in a separate session while preserving its standard streams and forwarding
+termination signals. This prevents macOS terminal job control from suspending the runtime with `SIGTTOU` when Codex runs
+in a terminal. The same launcher works without a controlling terminal in the desktop app.
+
+Restart the Codex session after changing this launcher or its MCP configuration. Confirm the effective launcher with
+`codex mcp get cua_repl --json`, then verify a native app read; configuration parsing alone does not prove computer use
+works. MCP calls have a 45-second timeout so a failed connection does not wait for several minutes.
+
 ## Temporary cleanup
 
 The tracked `helpers/codex-temp-clean` executable is available as soon as this repository is cloned into `~/.codex`; it
