@@ -81,8 +81,8 @@ ai-coord wait
 ai-coord done
 ```
 
-`ai-coord trailer` prints commit attribution. The `msg`, `inbox`, and `note` commands provide bounded peer communication
-and durable repository findings. Private state lives under `$XDG_STATE_HOME/ai-coord`, defaulting to
+`ai-coord trailer` prints commit attribution. The `msg`, `inbox`, and `finding` commands provide bounded peer
+communication and durable repository findings. Private state lives under `$XDG_STATE_HOME/ai-coord`, defaulting to
 `~/.local/state/ai-coord`.
 
 After adding or changing a non-managed hook, open `/hooks` in Codex CLI to review and trust the hook definition.
