@@ -173,7 +173,7 @@ notify = [
 [mcp_servers.node_repl.env]
   BROWSER_USE_AVAILABLE_BACKENDS = ""
   BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-  BROWSER_USE_CODEX_APP_VERSION = "26.901.31953"
+  BROWSER_USE_CODEX_APP_VERSION = "26.908.40834"
   BROWSER_USE_TINYSKY_ENABLED = "1"
   CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
   CODEX_HOME = "/Users/prb/.codex"
