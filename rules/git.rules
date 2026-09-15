@@ -41,21 +41,85 @@ prefix_rule(
     ],
 )
 
-# Prompt before history-rewriting git commands (rebase, filter-repo, filter-branch).
+# Prompt before repository-wide history filtering.
 prefix_rule(
-    pattern = [["git"], ["rebase", "filter-repo", "filter-branch"]],
+    pattern = [["git"], ["filter-repo", "filter-branch"]],
     decision = "prompt",
     justification = "History-rewriting git commands need explicit intent and a clean understanding of downstream impact.",
     match = [
-        "git rebase main",
         "git filter-repo --path secrets.txt --invert-paths",
         "git filter-branch --tree-filter 'rm secrets.txt'",
     ],
     not_match = [
+        "git rebase main",
+        "git rebase --continue",
+        "git rebase --skip",
+        "git rebase --abort",
+        "git rebase --quit",
+        "git rebase --help",
         "git merge main",
         "git log --oneline",
     ],
 )
+
+# Ordinary and interactive rebases have no blanket approval rule.
+# Guard risky options immediately after rebase or its interactive flag. Prefix
+# matching does not cover arbitrary option order, aliases, or Git config defaults.
+for rebase_command in ["git rebase", "git rebase -i", "git rebase --interactive"]:
+    prefix_rule(
+        pattern = rebase_command.split(" ") + [[
+            "--root", "--autostash", "--update-refs",
+            "-sours", "--strategy=ours",
+            "-Xours", "-Xtheirs", "--strategy-option=ours", "--strategy-option=theirs",
+        ]],
+        decision = "prompt",
+        justification = "Review rebases that rewrite from the root, stash shared work, move other branches, or discard changes through a merge strategy.",
+        match = [
+            rebase_command + " --root",
+            rebase_command + " --autostash main",
+            rebase_command + " --update-refs main",
+            rebase_command + " -sours main",
+            rebase_command + " --strategy=ours main",
+            rebase_command + " -Xours main",
+            rebase_command + " -Xtheirs main",
+            rebase_command + " --strategy-option=ours main",
+            rebase_command + " --strategy-option=theirs main",
+        ],
+        not_match = [
+            rebase_command + " main",
+            rebase_command + " --onto main old-base feature",
+            rebase_command + " --no-autostash main",
+            rebase_command + " --no-update-refs main",
+            rebase_command + " --strategy=ort main",
+        ],
+    )
+    prefix_rule(
+        pattern = rebase_command.split(" ") + [["-s", "--strategy"], ["ours"]],
+        decision = "prompt",
+        justification = "The ours rebase strategy discards every replayed patch.",
+        match = [
+            rebase_command + " -s ours main",
+            rebase_command + " --strategy ours main",
+        ],
+        not_match = [
+            rebase_command + " -s ort main",
+            rebase_command + " --strategy ort main",
+        ],
+    )
+    prefix_rule(
+        pattern = rebase_command.split(" ") + [["-X", "--strategy-option"], ["ours", "theirs"]],
+        decision = "prompt",
+        justification = "Favoring one side automatically discards the other side of conflicting changes.",
+        match = [
+            rebase_command + " -X ours main",
+            rebase_command + " -X theirs main",
+            rebase_command + " --strategy-option ours main",
+            rebase_command + " --strategy-option theirs main",
+        ],
+        not_match = [
+            rebase_command + " -X find-renames main",
+        ],
+    )
 
 # Prompt before discarding local changes with `git reset --hard`.
 prefix_rule(
