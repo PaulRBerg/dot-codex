@@ -38,6 +38,7 @@ version.json
 
 # local config profiles
 *.config.toml
+!cli.config.toml
 
 # tracked hooks
 !hooks/
