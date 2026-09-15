@@ -497,7 +497,7 @@ notify = [
 [projects."/Users/prb/projects/agent-toolkit"]
   trust_level = "trusted"
 
-[projects."/Users/prb/projects/house-design"]
+[projects."/Users/prb/projects/our-house"]
   trust_level = "trusted"
 
 [projects."/Users/prb/work/service-ops"]
