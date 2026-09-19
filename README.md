@@ -8,7 +8,7 @@ Personal `~/.codex` configuration and workflows for the Codex CLI.
 - `AGENTS_symlink.md`: symlinked source for instructions
 - `context/AGENTS_EXTRA.md`: appended context injected into `AGENTS.md`
 - `config.toml`: tracked runtime configuration
-- `cli.config.toml`: CLI profile preserving the detached Computer Use launcher
+- `cli.config.toml`: CLI profile retaining a disabled detached Computer Use launcher configuration
 - `hooks.json`: tracked global Codex hooks
 - `hooks/`: hook scripts and tests
 - `justfile`: automation for regenerating context
@@ -31,25 +31,26 @@ with stdlib `unittest`.
 
 ## Computer use
 
-Start terminal sessions with `codex --profile cli` (the chezmoi-managed `c` alias). `cli.config.toml` overlays the
-shared `config.toml` with the complete `cua_repl` definition, keeping the CLI launcher and timeout outside Desktop's
-shared configuration rewrites. It uses the runtime bundled with `/Applications/ChatGPT.app` and the installed
-`~/.codex/computer-use/Codex Computer Use.app` service. Native app access still requires the service's normal macOS and
-application permissions.
+Start terminal sessions with `codex --profile cli` (the chezmoi-managed `c` alias). Native Computer Use is disabled in
+this profile. `cli.config.toml` retains the complete `cua_repl` definition so it can be explicitly re-enabled while
+keeping its launcher and timeout outside Desktop's shared configuration rewrites. Chrome DevTools remains enabled.
 
-`helpers/cua-repl` launches the MCP runtime in a separate session while preserving its standard streams and forwarding
-termination signals. This prevents macOS terminal job control from suspending the runtime with `SIGTTOU` when Codex runs
-in a terminal. The same launcher works without a controlling terminal in the desktop app.
+When native Computer Use is explicitly re-enabled, it uses the runtime bundled with `/Applications/ChatGPT.app` and the
+installed `~/.codex/computer-use/Codex Computer Use.app` service. `helpers/cua-repl` launches the MCP runtime in a
+separate session while preserving its standard streams and forwarding termination signals. This prevents macOS terminal
+job control from suspending the runtime with `SIGTTOU` when Codex runs in a terminal. The same launcher works without a
+controlling terminal in the desktop app.
 
-On every launch, it reads `CFBundleShortVersionString` from `/Applications/ChatGPT.app/Contents/Info.plist` and sets
-`BROWSER_USE_CODEX_APP_VERSION`, overriding any inherited value. App version updates require no edits to
-`cli.config.toml`.
+When re-enabled, the launcher reads `CFBundleShortVersionString` from `/Applications/ChatGPT.app/Contents/Info.plist` on
+every launch and sets `BROWSER_USE_CODEX_APP_VERSION`, overriding any inherited value. App version updates require no
+edits to `cli.config.toml`.
 
-Start a new `codex --profile cli` session after changing this launcher or its MCP configuration. Confirm the effective
-launcher with `codex --profile cli mcp get cua_repl --json`, then verify a native app read. Repeat after Desktop
-restarts; configuration parsing alone does not prove computer use works. MCP calls have a 45-second timeout so a failed
-connection does not wait for several minutes. After Desktop runtime upgrades, compare the profile's runtime paths and
-environment with the current bundled `unified-computer-use` manifest while preserving the detached launcher and timeout.
+Start a fresh `codex --profile cli` session after changing this launcher or its MCP configuration. Confirm the effective
+disabled state with `codex --profile cli mcp get cua_repl --json`. Native interaction is appropriate only after explicit
+re-enablement and still requires the service's normal macOS and application permissions. MCP calls have a 45-second
+timeout so a failed connection does not wait for several minutes. After Desktop runtime upgrades, compare the profile's
+runtime paths and environment with the current bundled `unified-computer-use` manifest while preserving the detached
+launcher and timeout.
 
 ## Temporary cleanup
 
