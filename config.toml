@@ -14,7 +14,7 @@ model_reasoning_effort = "xhigh"
 personality = "friendly"
 plan_mode_reasoning_effort = "max"
 sandbox_mode = "danger-full-access"
-service_tier = "default"
+service_tier = "fast"
 suppress_unstable_features_warning = true
 web_search = "live"
 
@@ -178,7 +178,7 @@ notify = [
 [mcp_servers.node_repl.env]
   BROWSER_USE_AVAILABLE_BACKENDS = ""
   BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-  BROWSER_USE_CODEX_APP_VERSION = "26.908.70816"
+  BROWSER_USE_CODEX_APP_VERSION = "26.915.31945"
   BROWSER_USE_TINYSKY_ENABLED = "1"
   CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
   CODEX_HOME = "/Users/prb/.codex"
@@ -222,9 +222,6 @@ notify = [
   enabled = false
 
 [plugins."template-creator@openai-primary-runtime"]
-  enabled = false
-
-[plugins."sites@openai-bundled"]
   enabled = false
 
 [plugins."visualize@openai-bundled"]
