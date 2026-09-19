@@ -22,7 +22,7 @@ prettier_globs := "\"**/*.{md,json,jsonc,yaml,yml}\""
 # ---------------------------------------------------------------------------- #
 
 @default:
-    just build
+    just --list
 
 # Check documentation and configuration formatting.
 [group("checks")]
@@ -83,26 +83,11 @@ alias gls := gitleaks-staged
     bash .husky/pre-commit
 alias precommit := pre-commit
 
-# Run the flatten script; accepts a `files` arg mirroring flatten.py
-[private]
-@flatten files="AGENTS_symlink.md" *args:
-    {{ uv }} run python ~/.codex/helpers/flatten.py {{ files }} {{ args }}
-
-# Build AGENTS.md from an optional source and append extra context.
-@build source="AGENTS_symlink.md":
-    just flatten {{ source }} --output AGENTS.md
-    cat context/AGENTS_EXTRA.md >> AGENTS.md
-alias b := build
-
 # Run hook unit tests.
 @test-hooks:
     {{ uv }} run python -m unittest \
         hooks/UserPromptSubmit/copy_prompt_to_clipboard_test.py \
         hooks/PreCommit/pre_commit_test.py
 
-# Run flatten helper unit tests.
-@test-flatten:
-    {{ uv }} run python -m unittest helpers/flatten_test.py
-
 # Run all tests.
-@test: test-hooks test-flatten
+@test: test-hooks

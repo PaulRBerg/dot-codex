@@ -2,9 +2,8 @@
 .cache/
 .serena/
 
-# generated files
+# synced files
 AGENTS.md
-AGENTS_symlink.md
 
 # misc files
 auth.json

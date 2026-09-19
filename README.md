@@ -4,15 +4,12 @@ Personal `~/.codex` configuration and workflows for the Codex CLI.
 
 ## Layout
 
-- `AGENTS.md`: canonical agent instructions (generated)
-- `AGENTS_symlink.md`: symlinked source for instructions
-- `context/AGENTS_EXTRA.md`: appended context injected into `AGENTS.md`
+- `AGENTS.md`: shared agent instructions synced from `~/.agents/AGENTS.md`
 - `config.toml`: tracked runtime configuration
 - `cli.config.toml`: CLI profile retaining a disabled detached Computer Use launcher configuration
 - `hooks.json`: tracked global Codex hooks
 - `hooks/`: hook scripts and tests
-- `justfile`: automation for regenerating context
-- `helpers/flatten.py`: helper for flattening agent context
+- `justfile`: checks and hook tests
 - `helpers/codex-temp-clean`: guarded cleanup for agent-owned temporary directories
 - `rules/`: grouped Codex command approval rules
 - `prompts/`: prompt snippets
@@ -22,12 +19,14 @@ Personal `~/.codex` configuration and workflows for the Codex CLI.
 ## Usage
 
 ```bash
-just build
+just
 just test
 ```
 
-Regenerates `AGENTS.md` by flattening `AGENTS_symlink.md` and appending `context/AGENTS_EXTRA.md`. Runs hook unit tests
-with stdlib `unittest`.
+Lists available recipes and runs hook unit tests with stdlib `unittest`.
+
+Edit global instructions in `~/.agents/AGENTS.md`. That repository's commit hook copies them unchanged into this
+repository and commits the update; do not hand-edit `AGENTS.md` here.
 
 ## Computer use
 
