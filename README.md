@@ -41,6 +41,10 @@ application permissions.
 termination signals. This prevents macOS terminal job control from suspending the runtime with `SIGTTOU` when Codex runs
 in a terminal. The same launcher works without a controlling terminal in the desktop app.
 
+On every launch, it reads `CFBundleShortVersionString` from `/Applications/ChatGPT.app/Contents/Info.plist` and sets
+`BROWSER_USE_CODEX_APP_VERSION`, overriding any inherited value. App version updates require no edits to
+`cli.config.toml`.
+
 Start a new `codex --profile cli` session after changing this launcher or its MCP configuration. Confirm the effective
 launcher with `codex --profile cli mcp get cua_repl --json`, then verify a native app read. Repeat after Desktop
 restarts; configuration parsing alone does not prove computer use works. MCP calls have a 45-second timeout so a failed

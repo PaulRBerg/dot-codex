@@ -18,9 +18,9 @@ model_reasoning_effort = "max"
   output_token_limit = 25000
 
 [mcp_servers.cua_repl.env]
+  # helpers/cua-repl reads the installed app version on every launch.
   BROWSER_USE_AVAILABLE_BACKENDS = ""
   BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-  BROWSER_USE_CODEX_APP_VERSION = "26.908.70816"
   BROWSER_USE_TINYSKY_ENABLED = "1"
   CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
   CODEX_HOME = "/Users/prb/.codex"

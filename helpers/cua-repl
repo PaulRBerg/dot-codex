@@ -2,6 +2,7 @@
 """Keep the computer-use MCP runtime outside the CLI's terminal session."""
 
 import os
+import plistlib
 import signal
 import subprocess
 import sys
@@ -11,7 +12,10 @@ def main():
     if len(sys.argv) < 2:
         raise SystemExit("usage: cua-repl COMMAND [ARG ...]")
 
-    child = subprocess.Popen(sys.argv[1:], start_new_session=True)
+    with open("/Applications/ChatGPT.app/Contents/Info.plist", "rb") as app_info:
+        app_version = plistlib.load(app_info)["CFBundleShortVersionString"]
+    runtime_env = dict(os.environ, BROWSER_USE_CODEX_APP_VERSION=app_version)
+    child = subprocess.Popen(sys.argv[1:], env=runtime_env, start_new_session=True)
 
     def forward_signal(signum, _frame):
         try:
