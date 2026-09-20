@@ -194,6 +194,15 @@ notify = [
   NODE_REPL_TRUSTED_SERVICES = '{"sky":"@oai/sky/service"}'
   SKY_CUA_SERVICE_PATH = "/Users/prb/.codex/computer-use/Codex Computer Use.app"
 
+[mcp_servers.blender-lab]
+  args = ["--transport=stdio"]
+  command = "/Users/prb/.local/bin/blender-mcp"
+
+[mcp_servers.blender-lab.env]
+  BLENDER_MCP_HOST = "127.0.0.1"
+  BLENDER_MCP_PORT = "9876"
+  BLENDER_PATH = "/Applications/Blender.app/Contents/MacOS/Blender"
+
 # ---------------------------------------------------------------------------- #
 #                                    Notice                                    #
 # ---------------------------------------------------------------------------- #
