@@ -39,6 +39,10 @@ notify = [
 [apps._default]
   enabled = false
 
+[apps.blender]
+  default_tools_approval_mode = "approve"
+  enabled = true
+
 # ---------------------------------------------------------------------------- #
 #                                    Desktop                                   #
 # ---------------------------------------------------------------------------- #
