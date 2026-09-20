@@ -6,6 +6,7 @@ app-server-daemon/
 archived_sessions/
 cache/
 computer-use/
+dictation-history/
 generated_images/
 log/
 mcp-oauth-locks/
