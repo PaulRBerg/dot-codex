@@ -1,6 +1,6 @@
 model = "gpt-6-astra"
 model_reasoning_effort = "max"
-service_tier = "fast"
+service_tier = "default"
 # CLI-only Computer Use transport; Desktop owns the shared runtime configuration.
 [mcp_servers.cua_repl]
   args = [

@@ -14,7 +14,7 @@ model_reasoning_effort = "xhigh"
 personality = "friendly"
 plan_mode_reasoning_effort = "max"
 sandbox_mode = "danger-full-access"
-service_tier = "priority"
+service_tier = "default"
 suppress_unstable_features_warning = true
 web_search = "live"
 
@@ -538,4 +538,7 @@ notify = [
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/prb-contracts"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/Documents/Codex/2026-09-20/tu"]
   trust_level = "trusted"

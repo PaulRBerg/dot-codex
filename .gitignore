@@ -21,6 +21,7 @@ shell_snapshots/
 skills/.system/
 sqlite/
 vendor_imports/
+visualizations/
 
 # files
 *.bak
