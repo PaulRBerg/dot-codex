@@ -74,6 +74,9 @@ Active hooks:
   `/usr/bin/pbcopy` so Raycast clipboard history keeps a searchable prompt log.
 - `ai-coord hook codex`: tracks Codex lifecycle, presence, work ownership, messages, and repository notes in the shared
   [`ai-coord`](https://github.com/PaulRBerg/agent-toolkit/tree/main/coord) ledger used by Claude Code.
+- `ai-notify event codex`: records task context on `UserPromptSubmit` and sends desktop completion notifications on
+  `Stop`. Codex disables native hooks for internal title generation. The Desktop-owned `notify` wrapper no longer
+  forwards to ai-notify, preventing duplicate completion alerts.
 
 The clipboard hook sanitizes noisy prompt content before copying:
 

@@ -25,11 +25,10 @@ web_search = "live"
 # Desktop app rewrites "notify" on start: https://github.com/openai/codex/issues/28404
 # It does this even if "Turn completion notifications", "Enable permission notifications",
 # and "Enable question notifications" are all set to false
+# ai-notify uses native hooks in hooks.json; this callback only serves the Desktop app.
 notify = [
   "/Users/prb/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient",
   "turn-ended",
-  "--previous-notify",
-  "[\"ai-notify\",\"codex\"]",
 ]
 
 # ---------------------------------------------------------------------------- #
@@ -143,6 +142,12 @@ notify = [
 # Hook: prb-finance: Daily repository hygiene
 [hooks.state."/Users/prb/projects/prb-finance/.codex/hooks.json:session_start:0:0"]
   trusted_hash = "sha256:f64b46f9840bd9e66252b366b7f0067ff79a0a3887dea1ea8b001d5a8bf6d3de"
+
+[hooks.state."/Users/prb/.codex/hooks.json:user_prompt_submit:2:0"]
+  trusted_hash = "sha256:8220022b7ab9e67deb88f262a057efd40fc9c7c0c073fa51319ff2068cc668d2"
+
+[hooks.state."/Users/prb/.codex/hooks.json:stop:1:0"]
+  trusted_hash = "sha256:dca411ed3362baa20ee2c7a8ba205b4a673ae37d9290c4a2089da567f959d118"
 
 # ---------------------------------------------------------------------------- #
 #                                 Marketplaces                                 #

@@ -19,6 +19,15 @@
             "additionalContextLimit": 200
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ai-notify event codex",
+            "timeout": 5
+          }
+        ]
       }
     ],
 
@@ -28,6 +37,15 @@
           {
             "type": "command",
             "command": "ai-coord hook codex",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ai-notify event codex",
             "timeout": 5
           }
         ]
