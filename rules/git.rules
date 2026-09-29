@@ -1,3 +1,74 @@
+# Forbid tree-wide git commands that sweep other agents' uncommitted work; mirrors the Claude deny list.
+# Prefix matching covers only options directly after the subcommand, not arbitrary option order or aliases.
+prefix_rule(
+    pattern = [["git"], ["add"], ["-A", "--all", "."]],
+    decision = "forbidden",
+    justification = "`git add -A`/`--all`/`.` stages every change in the shared worktree, including other agents' uncommitted work; stage explicit paths you edited instead.",
+    match = [
+        "git add -A",
+        "git add --all",
+        "git add .",
+    ],
+    not_match = [
+        "git add src/app.ts",
+        "git add -p src/app.ts",
+        "git status --short",
+    ],
+)
+
+prefix_rule(
+    pattern = [["git"], ["commit"], ["-a", "-am", "--all"]],
+    decision = "forbidden",
+    justification = "`git commit -a`/`--all` stages every tracked modification in the shared worktree, including other agents' work; stage explicit paths you edited and commit with `ai-commit`.",
+    match = [
+        "git commit -a -m msg",
+        "git commit -am msg",
+        "git commit --all -m msg",
+    ],
+    not_match = [
+        "git commit -m msg",
+        "git commit --amend",
+    ],
+)
+
+# Prefix rules cannot anchor at the end of a command, so blocking bare `git stash` also blocks `git stash list/show`.
+prefix_rule(
+    pattern = [["git"], ["stash"]],
+    decision = "forbidden",
+    justification = "`git stash` reverts and hides other agents' uncommitted work in a shared stash; inspect existing stashes read-only with `git reflog show stash` or `git show <stash-sha>`.",
+    match = [
+        "git stash",
+        "git stash push -m wip",
+        "git stash save wip",
+        "git stash -u",
+        "git stash clear",
+        "git stash list",
+    ],
+    not_match = [
+        "git reflog show stash",
+        "git show abc1234",
+        "git status --short",
+    ],
+)
+
+# Prompt before force-pushing, which rewrites remote history.
+for push_command in ["git push", "git push origin"]:
+    prefix_rule(
+        pattern = push_command.split(" ") + [["--force", "-f", "--force-with-lease", "--force-if-includes"]],
+        decision = "prompt",
+        justification = "Force-pushing rewrites remote history and can drop other agents' or collaborators' commits; confirm the branch and intent first.",
+        match = [
+            push_command + " --force",
+            push_command + " -f",
+            push_command + " --force-with-lease",
+            push_command + " --force-if-includes",
+        ],
+        not_match = [
+            push_command + " --set-upstream",
+            push_command + " --tags",
+        ],
+    )
+
 # Prompt before force-deleting a git branch.
 prefix_rule(
     pattern = [["git"], ["branch"], ["-D"]],
@@ -26,17 +97,32 @@ prefix_rule(
     ],
 )
 
-# Prompt before deleting untracked files with `git clean`.
+# Forbid discarding every worktree change via `git checkout .`.
+for checkout_command in ["git checkout", "git checkout --"]:
+    prefix_rule(
+        pattern = checkout_command.split(" ") + ["."],
+        decision = "forbidden",
+        justification = "`git checkout .` discards every uncommitted change in the shared worktree, including other agents' work; restore only paths you edited.",
+        match = [
+            checkout_command + " .",
+        ],
+        not_match = [
+            checkout_command + " src/app.ts",
+            "git checkout main",
+        ],
+    )
+
+# Forbid `git clean`, which deletes untracked files across the shared worktree.
 prefix_rule(
-    pattern = [["git"], ["clean"], ["-f", "-ff", "-fd", "-df", "-fdx", "-fxd", "-xdf"]],
-    decision = "prompt",
-    justification = "`git clean` deletes untracked files; preview with `git clean -nd` and confirm intent first.",
+    pattern = [["git"], ["clean"]],
+    decision = "forbidden",
+    justification = "`git clean` deletes untracked files in the shared worktree, including other agents' new files; list candidates with `git status --short` and remove only paths you created.",
     match = [
         "git clean -fd",
         "git clean -fdx",
+        "git clean -nd",
     ],
     not_match = [
-        "git clean -nd",
         "git status --short",
     ],
 )
@@ -121,11 +207,11 @@ for rebase_command in ["git rebase", "git rebase -i", "git rebase --interactive"
         ],
     )
 
-# Prompt before discarding local changes with `git reset --hard`.
+# Forbid discarding local changes with `git reset --hard`.
 prefix_rule(
     pattern = [["git"], ["reset"], ["--hard"]],
-    decision = "prompt",
-    justification = "`git reset --hard` discards local changes; inspect the worktree and confirm intent first.",
+    decision = "forbidden",
+    justification = "`git reset --hard` discards every uncommitted change in the shared worktree, including other agents' work; revert only paths you edited.",
     match = [
         "git reset --hard",
         "git reset --hard HEAD~1",
@@ -136,13 +222,26 @@ prefix_rule(
     ],
 )
 
+# Forbid discarding every worktree change via `git restore .`.
+prefix_rule(
+    pattern = [["git"], ["restore"], ["."]],
+    decision = "forbidden",
+    justification = "`git restore .` discards every uncommitted change in the shared worktree, including other agents' work; restore only paths you edited.",
+    match = [
+        "git restore .",
+    ],
+    not_match = [
+        "git restore src/app.ts",
+        "git restore --staged src/app.ts",
+    ],
+)
+
 # Prompt before discarding worktree changes via `git restore`.
 prefix_rule(
-    pattern = [["git"], ["restore"], [".", "--worktree", "--source"]],
+    pattern = [["git"], ["restore"], ["--worktree", "--source"]],
     decision = "prompt",
     justification = "`git restore` can discard worktree changes; inspect the diff and confirm intent first.",
     match = [
-        "git restore .",
         "git restore --worktree src/app.ts",
         "git restore --source HEAD~1 src/app.ts",
     ],
