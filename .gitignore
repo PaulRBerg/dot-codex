@@ -20,6 +20,7 @@ sessions/
 shell_snapshots/
 skills/.system/
 sqlite/
+tui-thread-reference-capabilities/
 vendor_imports/
 visualizations/
 

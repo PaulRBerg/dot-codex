@@ -35,3 +35,6 @@ service_tier = "default"
   NODE_REPL_TRUSTED_CODE_PATHS = "/Users/prb/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
   NODE_REPL_TRUSTED_SERVICES = '{"sky":"@oai/sky/service"}'
   SKY_CUA_SERVICE_PATH = "/Users/prb/.codex/computer-use/Codex Computer Use.app"
+
+[tui]
+  screen_reader_detection_done = true

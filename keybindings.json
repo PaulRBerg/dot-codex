@@ -1,0 +1,6 @@
+[
+  {
+    "command": "composer.togglePlanMode",
+    "key": "Shift+Tab"
+  }
+]

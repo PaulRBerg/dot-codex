@@ -187,9 +187,9 @@ notify = [
 [mcp_servers.node_repl.env]
   BROWSER_USE_AVAILABLE_BACKENDS = ""
   BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-  BROWSER_USE_CODEX_APP_VERSION = "26.915.31945"
+  BROWSER_USE_CODEX_APP_VERSION = "26.924.22138"
   BROWSER_USE_TINYSKY_ENABLED = "1"
-  CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
+  CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
   CODEX_HOME = "/Users/prb/.codex"
   NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = ""
   NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
@@ -214,6 +214,9 @@ notify = [
 [notice]
   fast_default_opt_out = true
   hide_rate_limit_model_nudge = true
+
+[notice.model_migrations]
+  "gpt-5.6-sol" = "gpt-6-sol"
 
 # ---------------------------------------------------------------------------- #
 #                                Plugins Enabled                               #
@@ -372,6 +375,7 @@ notify = [
 # ---------------------------------------------------------------------------- #
 [tui]
   notifications = false
+  screen_reader_detection_done = true
   show_tooltips = false
   status_line = [
     "model-with-reasoning",
@@ -546,4 +550,16 @@ notify = [
   trust_level = "trusted"
 
 [projects."/Users/prb/Documents/Codex/2026-09-20/tu"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/markdrop"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/work/templates/foundry-template"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/sweeper-7702"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/Documents/Codex/2026-09-25/togg"]
   trust_level = "trusted"
