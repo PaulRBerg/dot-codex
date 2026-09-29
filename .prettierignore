@@ -1,6 +1,7 @@
 # runtime state
 .cache/
 .serena/
+plans/
 
 # synced files
 AGENTS.md

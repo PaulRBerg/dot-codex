@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-import copy_prompt_to_clipboard as hook  # noqa: E402
+import copy_prompt_to_clipboard as hook
 
 
 def _long_prompt() -> str:
@@ -172,12 +172,14 @@ class TestMetadataPrefix(unittest.TestCase):
     def test_builds_metadata_with_path_ref_when_git_unavailable(self) -> None:
         data = {"cwd": "/tmp/work/demo"}
 
-        with patch.object(hook, "_git_output", return_value=""):
-            with patch.object(hook, "_path_reference", return_value="deadbeef"):
-                self.assertEqual(
-                    hook.build_metadata_prefix(data),
-                    "[repo:demo ref:deadbeef]",
-                )
+        with (
+            patch.object(hook, "_git_output", return_value=""),
+            patch.object(hook, "_path_reference", return_value="deadbeef"),
+        ):
+            self.assertEqual(
+                hook.build_metadata_prefix(data),
+                "[repo:demo ref:deadbeef]",
+            )
 
     def test_formats_clipboard_prompt_with_metadata(self) -> None:
         prompt = _long_prompt()
@@ -244,9 +246,7 @@ class TestMetadataPrefix(unittest.TestCase):
     def test_format_skips_subagent_notification(self) -> None:
         prompt = (
             "<subagent_notification>\n"
-            '{"status":{"completed":"'
-            + ("x" * hook.MIN_PROMPT_CHARS)
-            + '"}}\n'
+            '{"status":{"completed":"' + ("x" * hook.MIN_PROMPT_CHARS) + '"}}\n'
             "</subagent_notification>"
         )
 
@@ -298,14 +298,16 @@ class TestMetadataPrefix(unittest.TestCase):
 
 class TestMain(unittest.TestCase):
     def _run_main(self, raw: str) -> Any:
-        with patch.object(
-            hook,
-            "build_metadata_prefix",
-            return_value="[repo:demo thread:0199a213]",
+        with (
+            patch.object(
+                hook,
+                "build_metadata_prefix",
+                return_value="[repo:demo thread:0199a213]",
+            ),
+            patch.object(hook.sys, "stdin", StringIO(raw)),
+            self.assertRaises(SystemExit) as exc_info,
         ):
-            with patch.object(hook.sys, "stdin", StringIO(raw)):
-                with self.assertRaises(SystemExit) as exc_info:
-                    hook.main()
+            hook.main()
 
         return exc_info.exception.code
 
@@ -340,9 +342,7 @@ class TestMain(unittest.TestCase):
         mock_run.assert_not_called()
 
     @patch.object(hook.subprocess, "run")
-    def test_skips_pbcopy_when_prompt_is_short_after_sanitize(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_skips_pbcopy_when_prompt_is_short_after_sanitize(self, mock_run: MagicMock) -> None:
         prompt = (
             "review this\n"
             "[Pasted Content 123,456 chars]\n"
@@ -378,9 +378,7 @@ class TestMain(unittest.TestCase):
         mock_run.assert_not_called()
 
     @patch.object(hook.subprocess, "run")
-    def test_skips_pbcopy_for_subagent_control_prompt(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_skips_pbcopy_for_subagent_control_prompt(self, mock_run: MagicMock) -> None:
         prompt = (
             "Please stop the broad hunt and return your best current "
             "UTXO-style findings now. If no BTC/LTC/DASH/DOGE/BCH/ZEC "
@@ -414,26 +412,26 @@ class TestMain(unittest.TestCase):
         mock_run.assert_not_called()
 
     @patch.object(hook.subprocess, "run")
-    def test_metadata_failure_copies_sanitized_prompt(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_metadata_failure_copies_sanitized_prompt(self, mock_run: MagicMock) -> None:
         prompt = _long_prompt()
         mock_run.return_value = MagicMock(returncode=0, stderr="")
         stderr = StringIO()
 
-        with patch.object(
-            hook,
-            "build_metadata_prefix",
-            side_effect=RuntimeError("boom"),
-        ):
-            with patch.object(
+        with (
+            patch.object(
+                hook,
+                "build_metadata_prefix",
+                side_effect=RuntimeError("boom"),
+            ),
+            patch.object(
                 hook.sys,
                 "stdin",
                 StringIO(json.dumps({"prompt": prompt})),
-            ):
-                with redirect_stderr(stderr):
-                    with self.assertRaises(SystemExit) as exc_info:
-                        hook.main()
+            ),
+            redirect_stderr(stderr),
+            self.assertRaises(SystemExit) as exc_info,
+        ):
+            hook.main()
 
         self.assertEqual(exc_info.exception.code, 0)
         self.assertEqual(mock_run.call_args.kwargs["input"], prompt)
@@ -475,9 +473,11 @@ class TestMain(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             script_path = Path(temp_dir) / "copy_prompt_to_clipboard.py"
 
-            with patch.dict(hook.os.environ, {"CODEX_CLIP_DEBUG": "1"}):
-                with patch.object(hook, "__file__", str(script_path)):
-                    hook._maybe_debug(raw)
+            with (
+                patch.dict(hook.os.environ, {"CODEX_CLIP_DEBUG": "1"}),
+                patch.object(hook, "__file__", str(script_path)),
+            ):
+                hook._maybe_debug(raw)
 
             debug_path = Path(temp_dir) / ".debug.jsonl"
             self.assertEqual(debug_path.read_text(encoding="utf-8"), raw + "\n")

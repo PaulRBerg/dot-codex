@@ -10,9 +10,9 @@ Personal `~/.codex` configuration and workflows for the Codex CLI.
 - `hooks.json`: tracked global Codex hooks
 - `hooks/`: hook scripts and tests
 - `justfile`: checks and hook tests
+- `ruff.toml`: Ruff lint and format configuration for the hook Python
 - `helpers/codex-temp-clean`: guarded cleanup for agent-owned temporary directories
 - `rules/`: grouped Codex command approval rules
-- `prompts/`: prompt snippets
 - `sessions/`: saved sessions
 - `history.jsonl`: local run history
 
@@ -26,7 +26,7 @@ just test
 Lists available recipes and runs hook unit tests with stdlib `unittest`.
 
 Edit global instructions in `~/.agents/AGENTS.md`. That repository's commit hook copies them unchanged into this
-repository and commits the update; do not hand-edit `AGENTS.md` here.
+repository, commits the update, and pushes it; do not hand-edit `AGENTS.md` here.
 
 ## Computer use
 
@@ -72,8 +72,8 @@ Active hooks:
 
 - `hooks/UserPromptSubmit/copy_prompt_to_clipboard.py`: copies each submitted prompt to the macOS clipboard via
   `/usr/bin/pbcopy` so Raycast clipboard history keeps a searchable prompt log.
-- `ai-coord hook codex`: tracks Codex lifecycle, presence, work ownership, messages, and repository notes in the shared
-  [`ai-coord`](https://github.com/PaulRBerg/agent-toolkit/tree/main/coord) ledger used by Claude Code.
+- `ai-coord hook codex`: tracks Codex lifecycle, presence, work ownership, messages, and repository findings in the
+  shared [`ai-coord`](https://github.com/PaulRBerg/agent-toolkit/tree/main/coord) ledger used by Claude Code.
 - `ai-notify event codex`: records task context on `UserPromptSubmit` and sends desktop completion notifications on
   `Stop`. Codex disables native hooks for internal title generation. The Desktop-owned `notify` wrapper no longer
   forwards to ai-notify, preventing duplicate completion alerts.

@@ -12,7 +12,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 REPOSITORY_ROOT = Path(__file__).parents[2]
 HOOK_SOURCE = REPOSITORY_ROOT / ".husky" / "pre-commit"
 TRUST_CHECK_SOURCE = REPOSITORY_ROOT / "hooks" / "PreCommit" / "check_codex_hook_trust.py"
@@ -48,7 +47,9 @@ class PreCommitHookTest(unittest.TestCase):
         (self.repo / ".husky").mkdir()
         (self.repo / "hooks" / "PreCommit").mkdir(parents=True)
         shutil.copy2(HOOK_SOURCE, self.repo / ".husky" / "pre-commit")
-        shutil.copy2(TRUST_CHECK_SOURCE, self.repo / "hooks" / "PreCommit" / "check_codex_hook_trust.py")
+        shutil.copy2(
+            TRUST_CHECK_SOURCE, self.repo / "hooks" / "PreCommit" / "check_codex_hook_trust.py"
+        )
         self._write_tool("bun", BUN_STUB)
         self._write_tool("uv", UV_STUB)
         self._write_tool("codex", CODEX_STUB)
@@ -67,7 +68,9 @@ class PreCommitHookTest(unittest.TestCase):
         result = self._run_hook()
 
         self.assertEqual(result.returncode, 1)
-        self.assertIn("error: partially staged files are unsafe in the shared worktree:", result.stderr)
+        self.assertIn(
+            "error: partially staged files are unsafe in the shared worktree:", result.stderr
+        )
         self.assertIn("docs/note.md", result.stderr)
         self.assertFalse(self.tool_log.exists())
 
@@ -208,7 +211,9 @@ class PreCommitHookTest(unittest.TestCase):
 
     def test_enabled_only_hook_state_is_not_a_trust_provision(self) -> None:
         stale_key = f"{self.repo}/hooks.json:user_prompt_submit:0:1"
-        self._write("config.toml", self._trust_config([self.active_hook_key], enabled_only=[stale_key]))
+        self._write(
+            "config.toml", self._trust_config([self.active_hook_key], enabled_only=[stale_key])
+        )
         self._git("add", "config.toml")
 
         result = self._run_hook()
@@ -220,7 +225,9 @@ class PreCommitHookTest(unittest.TestCase):
         for mode in ("error", "malformed"):
             with self.subTest(mode=mode):
                 alternate_index = self._alternate_index()
-                self._write("config.toml", self._trust_config([self.active_hook_key], trailer=f"# {mode}\n"))
+                self._write(
+                    "config.toml", self._trust_config([self.active_hook_key], trailer=f"# {mode}\n")
+                )
                 self._git("add", "config.toml", env={"GIT_INDEX_FILE": str(alternate_index)})
                 self._write("config.toml", self.baseline_config)
 
@@ -282,7 +289,9 @@ class PreCommitHookTest(unittest.TestCase):
             capture_output=True,
         )
 
-    def _git(self, *arguments: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+    def _git(
+        self, *arguments: str, env: dict[str, str] | None = None
+    ) -> subprocess.CompletedProcess[str]:
         command_env = os.environ | (env or {})
         return subprocess.run(
             ["git", *arguments],

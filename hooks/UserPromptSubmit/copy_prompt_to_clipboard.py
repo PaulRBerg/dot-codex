@@ -35,9 +35,7 @@ CLAUDE_PASTE_MARKER_RE = re.compile(
     r"\[(?:Pasted text|Image|\.\.\.Truncated text) #\d+(?: \+\d+ lines)?\.*\]"
 )
 CODEX_PASTED_CONTENT_RE = re.compile(r"\[Pasted Content [\d,]+ chars\]")
-CODEX_IMAGE_MARKER_RE = re.compile(
-    r"\[codex-clipboard-[^\]\n]*\.png \d+x\d+\]"
-)
+CODEX_IMAGE_MARKER_RE = re.compile(r"\[codex-clipboard-[^\]\n]*\.png \d+x\d+\]")
 FENCE_RE = re.compile(
     r"^[ \t]*(`{3,})[^\n]*\n.*?^[ \t]*\1[ \t]*$",
     re.MULTILINE | re.DOTALL,
@@ -47,9 +45,7 @@ UNTERMINATED_FENCE_RE = re.compile(
     re.MULTILINE | re.DOTALL,
 )
 BLANK_LINES_RE = re.compile(r"\n{3,}")
-TERMINAL_ESCAPE_RE = re.compile(
-    r"\x1b(?:\][^\x07\x1b]*(?:\x07|\x1b\\)|\[[0-?]*[ -/]*[@-~]|[@-_])"
-)
+TERMINAL_ESCAPE_RE = re.compile(r"\x1b(?:\][^\x07\x1b]*(?:\x07|\x1b\\)|\[[0-?]*[ -/]*[@-~]|[@-_])")
 CONTROL_CHARACTER_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 METADATA_VALUE_RE = re.compile(r"[^A-Za-z0-9._/@:-]+")
 UUID_RE = re.compile(r"\b([0-9a-fA-F]{8})-[0-9a-fA-F-]{8,}\b")
@@ -131,10 +127,7 @@ def _collapse_size(text: str) -> str:
 
     A bounded head is cut only at line boundaries — never mid-word.
     """
-    lines = [
-        "[Pasted]" if len(line) > LONG_LINE_CHARS else line
-        for line in text.split("\n")
-    ]
+    lines = ["[Pasted]" if len(line) > LONG_LINE_CHARS else line for line in text.split("\n")]
     text = "\n".join(lines)
 
     if len(lines) <= MAX_LINES and len(text) <= MAX_CHARS:
@@ -410,6 +403,7 @@ def main() -> None:
             encoding="utf-8",
             capture_output=True,
             timeout=5,
+            check=False,
         )
     except (OSError, subprocess.SubprocessError) as exc:
         print(f"Warning: pbcopy failed: {exc}", file=sys.stderr)

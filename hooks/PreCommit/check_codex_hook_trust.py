@@ -14,7 +14,6 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-
 APP_SERVER_TIMEOUT_SECONDS = 10
 MAX_RESPONSE_BYTES = 1024 * 1024
 TRUST_INPUTS = ("config.toml", "hooks.json")
@@ -26,7 +25,13 @@ class TrustCheckError(RuntimeError):
 
 def split_hook_key(key: str) -> tuple[Path, str]:
     parts = key.rsplit(":", 3)
-    if len(parts) != 4 or not parts[0] or not parts[1] or not parts[2].isdigit() or not parts[3].isdigit():
+    if (
+        len(parts) != 4
+        or not parts[0]
+        or not parts[1]
+        or not parts[2].isdigit()
+        or not parts[3].isdigit()
+    ):
         raise TrustCheckError(f"malformed Codex hook trust key: {key}")
     return Path(parts[0]), f":{parts[1]}:{parts[2]}:{parts[3]}"
 
@@ -82,7 +87,10 @@ def send_message(process: subprocess.Popen[str], message: dict[str, Any]) -> Non
 
 
 def receive_response(
-    process: subprocess.Popen[str], selector: selectors.BaseSelector, request_id: int, deadline: float
+    process: subprocess.Popen[str],
+    selector: selectors.BaseSelector,
+    request_id: int,
+    deadline: float,
 ) -> dict[str, Any]:
     assert process.stdout is not None
     received_bytes = 0
@@ -190,12 +198,16 @@ def app_server_hooks(snapshot_home: Path, cwds: list[str]) -> list[dict[str, Any
         if not isinstance(errors, list):
             raise TrustCheckError("Codex hooks/list returned malformed errors")
         if errors:
-            raise TrustCheckError(f"Codex reported hook discovery errors: {json.dumps(errors, separators=(',', ':'))}")
+            raise TrustCheckError(
+                f"Codex reported hook discovery errors: {json.dumps(errors, separators=(',', ':'))}"
+            )
         hooks.extend(entry["hooks"])
     return hooks
 
 
-def normalized_discovered_key(hook: dict[str, Any], snapshot_home: Path, canonical_home: Path) -> str:
+def normalized_discovered_key(
+    hook: dict[str, Any], snapshot_home: Path, canonical_home: Path
+) -> str:
     key = hook.get("key")
     source = hook.get("sourcePath")
     if not isinstance(key, str) or not isinstance(source, str) or not key.startswith(f"{source}:"):

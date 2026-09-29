@@ -10,12 +10,14 @@ export RUST_LOG := "warn"
 #                                 DEPENDENCIES                                 #
 # ---------------------------------------------------------------------------- #
 
+bun := require("bun")
 uv := require("uv")
 gitleaks := require("gitleaks")
 taplo := require("taplo")
 prettier := "bunx --no-install prettier"
 prettier_cache := ".cache/prettier/.prettier-cache"
 prettier_globs := "\"**/*.{md,json,jsonc,yaml,yml}\""
+ruff := "uvx --from 'ruff>=0.15.18,<0.16' ruff"
 
 # ---------------------------------------------------------------------------- #
 #                                   COMMANDS                                   #
@@ -72,6 +74,19 @@ alias gls := gitleaks-staged
 [group("checks")]
 @toml-format-write:
     {{ taplo }} format
+
+# Check Python files.
+[group("checks")]
+@ruff-check:
+    {{ ruff }} check .
+alias rc := ruff-check
+
+# Format Python files.
+[group("checks")]
+@ruff-write:
+    {{ ruff }} check --fix .
+    {{ ruff }} format .
+alias rw := ruff-write
 
 # Install Husky Git hooks for this checkout.
 @hooks-install:
