@@ -102,6 +102,7 @@ alias precommit := pre-commit
 @test-hooks:
     {{ uv }} run python -m unittest \
         hooks/UserPromptSubmit/copy_prompt_to_clipboard_test.py \
+        hooks/PreToolUse/git_guard_test.py \
         hooks/PreCommit/pre_commit_test.py
 
 # Run all tests.

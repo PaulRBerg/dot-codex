@@ -74,6 +74,11 @@ Active hooks:
   `/usr/bin/pbcopy` so Raycast clipboard history keeps a searchable prompt log.
 - `ai-coord hook codex`: tracks Codex lifecycle, presence, work ownership, messages, and repository findings in the
   shared [`ai-coord`](https://github.com/PaulRBerg/agent-toolkit/tree/main/coord) ledger used by Claude Code.
+- `hooks/PreToolUse/git_guard.py`: denies git commands that sweep other agents' shared-worktree work (bare `git stash`,
+  `git add -A`/`.`, `git commit -a`, `git checkout .`, `git restore .`, `git reset --hard`, `git clean`, autostash) with
+  options in any order, and force pushes outside the `git push [origin] <force-flag>` forms that `rules/git.rules`
+  prompts on. Execpolicy prefix rules cannot match options after other arguments or anchor at the end of a command, so
+  the rules keep only the prefix forms and leave `git stash list`/`show` usable.
 - `ai-notify event codex`: records task context on `UserPromptSubmit` and sends desktop completion notifications on
   `Stop`. Codex disables native hooks for internal title generation. The Desktop-owned `notify` wrapper no longer
   forwards to ai-notify, preventing duplicate completion alerts.

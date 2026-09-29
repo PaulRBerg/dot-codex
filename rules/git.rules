@@ -1,5 +1,6 @@
 # Forbid tree-wide git commands that sweep other agents' uncommitted work; mirrors the Claude deny list.
-# Prefix matching covers only options directly after the subcommand, not arbitrary option order or aliases.
+# Prefix matching covers only options directly after the subcommand, not arbitrary option order or aliases;
+# hooks/PreToolUse/git_guard.py checks the same commands with options in any order.
 prefix_rule(
     pattern = [["git"], ["add"], ["-A", "--all", "."]],
     decision = "forbidden",
@@ -31,22 +32,27 @@ prefix_rule(
     ],
 )
 
-# Prefix rules cannot anchor at the end of a command, so blocking bare `git stash` also blocks `git stash list/show`.
+# Prefix rules cannot anchor at the end of a command, so a `git stash` rule would also block `git stash list/show`.
+# This rule forbids the explicit stash-creating forms; hooks/PreToolUse/git_guard.py denies bare `git stash`.
 prefix_rule(
-    pattern = [["git"], ["stash"]],
+    pattern = [["git"], ["stash"], [
+        "push", "save", "clear", "--",
+        "-a", "--all", "-k", "--keep-index", "--no-keep-index", "-m", "--message",
+        "-p", "--patch", "-q", "--quiet", "-S", "--staged", "-u", "--include-untracked",
+    ]],
     decision = "forbidden",
-    justification = "`git stash` reverts and hides other agents' uncommitted work in a shared stash; inspect existing stashes read-only with `git reflog show stash` or `git show <stash-sha>`.",
+    justification = "`git stash` moves other agents' uncommitted work into a shared stash; read-only `git stash list` and `git stash show` stay available.",
     match = [
-        "git stash",
         "git stash push -m wip",
         "git stash save wip",
         "git stash -u",
+        "git stash -m wip",
         "git stash clear",
-        "git stash list",
     ],
     not_match = [
+        "git stash list",
+        "git stash show -p",
         "git reflog show stash",
-        "git show abc1234",
         "git status --short",
     ],
 )

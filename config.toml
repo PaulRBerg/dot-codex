@@ -107,6 +107,10 @@ notify = [
 # ---------------------------------------------------------------------------- #
 [hooks.state]
 
+# Hook: git guard: Shared-worktree git command safety
+[hooks.state."/Users/prb/.codex/hooks.json:pre_tool_use:0:0"]
+  trusted_hash = "sha256:4d8fd5a0239e04cdf5a6596143b744c45d45ad52a7972d69c2a7107103ac43b7"
+
 # Hook: ai-coord: Post-tool state and inbox sync
 [hooks.state."/Users/prb/.codex/hooks.json:post_tool_use:0:0"]
   trusted_hash = "sha256:92607b5469437fbdcfd2a72756c6aef18f9e16c51a77c91b9e9230f12b683ef1"
