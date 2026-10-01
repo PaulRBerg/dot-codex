@@ -6,7 +6,6 @@ Personal `~/.codex` configuration and workflows for the Codex CLI.
 
 - `AGENTS.md`: shared agent instructions synced from `~/.agents/AGENTS.md`
 - `config.toml`: tracked runtime configuration
-- `cli.config.toml`: CLI profile retaining a disabled detached Computer Use launcher configuration
 - `hooks.json`: tracked global Codex hooks
 - `hooks/`: hook scripts and tests
 - `justfile`: checks and hook tests
@@ -30,26 +29,18 @@ repository, commits the update, and pushes it; do not hand-edit `AGENTS.md` here
 
 ## Computer use
 
-Start terminal sessions with `codex --profile cli` (the chezmoi-managed `c` alias). Native Computer Use is disabled in
-this profile. `cli.config.toml` retains the complete `cua_repl` definition so it can be explicitly re-enabled while
-keeping its launcher and timeout outside Desktop's shared configuration rewrites. Chrome DevTools remains enabled.
+Start terminal sessions with `codex` or the chezmoi-managed `c` alias. Both use `config.toml` without a profile,
+allowing the CLI to use the shared background server. Native Computer Use is enabled through `features.computer_use`;
+Chrome DevTools remains enabled.
 
-When native Computer Use is explicitly re-enabled, it uses the runtime bundled with `/Applications/ChatGPT.app` and the
-installed `~/.codex/computer-use/Codex Computer Use.app` service. `helpers/cua-repl` launches the MCP runtime in a
-separate session while preserving its standard streams and forwarding termination signals. This prevents macOS terminal
-job control from suspending the runtime with `SIGTTOU` when Codex runs in a terminal. The same launcher works without a
-controlling terminal in the desktop app.
+`helpers/cua-repl` remains available for an explicitly configured `cua_repl` MCP server. It launches the supplied
+runtime command in a separate session while preserving its standard streams and forwarding termination signals. This
+prevents macOS terminal job control from suspending the runtime with `SIGTTOU` when Codex runs in a terminal. No
+`cua_repl` MCP server is currently configured.
 
-When re-enabled, the launcher reads `CFBundleShortVersionString` from `/Applications/ChatGPT.app/Contents/Info.plist` on
-every launch and sets `BROWSER_USE_CODEX_APP_VERSION`, overriding any inherited value. App version updates require no
-edits to `cli.config.toml`.
-
-Start a fresh `codex --profile cli` session after changing this launcher or its MCP configuration. Confirm the effective
-disabled state with `codex --profile cli mcp get cua_repl --json`. Native interaction is appropriate only after explicit
-re-enablement and still requires the service's normal macOS and application permissions. MCP calls have a 45-second
-timeout so a failed connection does not wait for several minutes. After Desktop runtime upgrades, compare the profile's
-runtime paths and environment with the current bundled `unified-computer-use` manifest while preserving the detached
-launcher and timeout.
+The launcher reads `CFBundleShortVersionString` from `/Applications/ChatGPT.app/Contents/Info.plist` on every launch and
+sets `BROWSER_USE_CODEX_APP_VERSION`, overriding any inherited value. Start a fresh session after changing its launcher
+or MCP configuration. Native interaction requires the service's normal macOS and application permissions.
 
 ## Temporary cleanup
 
