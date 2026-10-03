@@ -75,6 +75,7 @@ notify = [
   image_generation = true
   in_app_browser = false
   js_repl = false
+  mentions_v2 = false
   multi_agent = true
   plugin_sharing = false
   plugins = true
