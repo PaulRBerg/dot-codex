@@ -66,6 +66,8 @@ notify = [
 #                                   Features                                   #
 # ---------------------------------------------------------------------------- #
 [features]
+  # Match the shared daemon default across CLI versions.
+  api_key_model_discovery = true
   apps = false
   browser_use = false
   browser_use_external = false
