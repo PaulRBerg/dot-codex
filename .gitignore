@@ -29,6 +29,8 @@ visualizations/
 *.sqlite*
 .sandbox_migration
 .codex-global-state.json
+.codex-global-state.json.bak.tmp-*
+..codex-global-state.json.bak.tmp-*
 ..codex-global-state.json.tmp-*
 .personality_migration
 auth.json
