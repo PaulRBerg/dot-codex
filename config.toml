@@ -173,7 +173,7 @@ notify = [
 #                                      MCP                                     #
 # ---------------------------------------------------------------------------- #
 [mcp_servers.chrome-devtools]
-  command = "/Users/prb/.local/libexec/mcp/chrome-devtools.sh"
+  command = "/Users/prb/.agents/skills/chromium-browser/scripts/chrome-devtools-mcp.sh"
 
 [mcp_servers.computer-use]
   args = ["mcp"]
@@ -183,7 +183,7 @@ notify = [
 
 [mcp_servers.serena]
   args = ["--context=codex"]
-  command = "/Users/prb/.local/libexec/mcp/serena.sh"
+  command = "/Users/prb/projects/agent-skills/mcp/serena.sh"
   startup_timeout_sec = 15.0
 
 [mcp_servers.node_repl]
