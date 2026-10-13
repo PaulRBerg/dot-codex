@@ -380,6 +380,10 @@ notify = [
   enabled = false
   name = "deep-research-work:deep-research"
 
+[[skills.config]]
+  enabled = false
+  name = "work-pets:create-pet"
+
 # ---------------------------------------------------------------------------- #
 #                                      TUI                                     #
 # ---------------------------------------------------------------------------- #
