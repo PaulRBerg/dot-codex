@@ -1,63 +1,76 @@
 {
   "hooks": {
-    "UserPromptSubmit": [
+    "PostToolUse": [
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "/Users/prb/.local/bin/uv run python /Users/prb/.codex/hooks/UserPromptSubmit/copy_prompt_to_clipboard.py",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
             "command": "ai-coord hook codex",
             "timeout": 5,
-            "additionalContextLimit": 200
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ai-notify event codex",
-            "timeout": 5
+            "type": "command"
           }
         ]
       }
     ],
-
-    "Stop": [
+    "PreToolUse": [
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "ai-coord hook codex",
-            "timeout": 5
+            "command": "/Users/prb/.local/bin/uv run python /Users/prb/.codex/hooks/PreToolUse/git_guard.py",
+            "timeout": 5,
+            "type": "command"
           }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ai-notify event codex",
-            "timeout": 5
-          }
-        ]
+        ],
+        "matcher": "Bash"
       }
     ],
     "SessionEnd": [
       {
         "hooks": [
           {
-            "type": "command",
             "command": "ai-coord hook codex",
-            "timeout": 3
+            "timeout": 3,
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "ai-coord hook codex",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "startup|resume|clear"
+      },
+      {
+        "hooks": [
+          {
+            "command": "bash '/Users/prb/.codex/herdr-agent-state.sh' session",
+            "timeout": 10,
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "ai-coord hook codex",
+            "timeout": 5,
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "ai-notify event codex",
+            "timeout": 5,
+            "type": "command"
           }
         ]
       }
@@ -66,9 +79,9 @@
       {
         "hooks": [
           {
-            "type": "command",
             "command": "ai-coord hook codex",
-            "timeout": 5
+            "timeout": 5,
+            "type": "command"
           }
         ]
       }
@@ -77,44 +90,39 @@
       {
         "hooks": [
           {
-            "type": "command",
             "command": "ai-coord hook codex",
-            "timeout": 5
+            "timeout": 5,
+            "type": "command"
           }
         ]
       }
     ],
-    "PreToolUse": [
+    "UserPromptSubmit": [
       {
-        "matcher": "Bash",
         "hooks": [
           {
-            "type": "command",
-            "command": "/Users/prb/.local/bin/uv run python /Users/prb/.codex/hooks/PreToolUse/git_guard.py",
-            "timeout": 5
+            "command": "/Users/prb/.local/bin/uv run python /Users/prb/.codex/hooks/UserPromptSubmit/copy_prompt_to_clipboard.py",
+            "timeout": 10,
+            "type": "command"
           }
         ]
-      }
-    ],
-    "PostToolUse": [
+      },
       {
         "hooks": [
           {
-            "type": "command",
+            "additionalContextLimit": 200,
             "command": "ai-coord hook codex",
-            "timeout": 5
+            "timeout": 5,
+            "type": "command"
           }
         ]
-      }
-    ],
-    "SessionStart": [
+      },
       {
-        "matcher": "startup|resume|clear",
         "hooks": [
           {
-            "type": "command",
-            "command": "ai-coord hook codex",
-            "timeout": 5
+            "command": "ai-notify event codex",
+            "timeout": 5,
+            "type": "command"
           }
         ]
       }
