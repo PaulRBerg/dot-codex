@@ -59,6 +59,10 @@ current-user-owned mode-`0700` directory named `codex-*` directly beneath `/tmp`
 
 `hooks.json` registers global Codex CLI hooks. Codex loads it from `~/.codex/hooks.json`.
 
+Herdr's `SessionStart` hook uses the ignored `herdr-agent-state.sh` script. Herdr manages and overwrites this script
+when its integration is reinstalled or updated. After a fresh checkout, run `herdr integration install codex` to
+recreate it.
+
 Active hooks:
 
 - `hooks/UserPromptSubmit/copy_prompt_to_clipboard.py`: copies each submitted prompt to the macOS clipboard via
