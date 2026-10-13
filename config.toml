@@ -259,7 +259,7 @@ notify = [
   enabled = true
 
 [plugins."code-review@openai-bundled"]
-  enabled = true
+  enabled = false
 
 
 # ---------------------------------------------------------------------------- #
