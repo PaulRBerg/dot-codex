@@ -9,7 +9,7 @@
 
 approval_policy = "never"
 check_for_update_on_startup = true
-model = "gpt-6-astra"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "xhigh"
 personality = "friendly"
 plan_mode_reasoning_effort = "max"
@@ -194,7 +194,7 @@ notify = [
 [mcp_servers.node_repl.env]
   BROWSER_USE_AVAILABLE_BACKENDS = ""
   BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-  BROWSER_USE_CODEX_APP_VERSION = "26.928.31416"
+  BROWSER_USE_CODEX_APP_VERSION = "26.1007.30912"
   BROWSER_USE_TINYSKY_ENABLED = "1"
   CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
   CODEX_HOME = "/Users/prb/.codex"
@@ -205,15 +205,6 @@ notify = [
   NODE_REPL_TRUSTED_CODE_PATHS = "/Users/prb/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
   NODE_REPL_TRUSTED_SERVICES = '{"sky":"@oai/sky/service"}'
   SKY_CUA_SERVICE_PATH = "/Users/prb/.codex/computer-use/Codex Computer Use.app"
-
-[mcp_servers.blender-lab]
-  args = ["--transport=stdio"]
-  command = "/Users/prb/.local/bin/blender-mcp"
-
-[mcp_servers.blender-lab.env]
-  BLENDER_MCP_HOST = "127.0.0.1"
-  BLENDER_MCP_PORT = "9876"
-  BLENDER_PATH = "/Applications/Blender.app/Contents/MacOS/Blender"
 
 # ---------------------------------------------------------------------------- #
 #                                    Notice                                    #
@@ -576,4 +567,19 @@ notify = [
   trust_level = "trusted"
 
 [projects."/Users/prb/Documents/Codex/2026-09-25/togg"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/circadian"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/pad/hands-on-llms"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/menagerie"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/prb-site"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/prberg"]
   trust_level = "trusted"
