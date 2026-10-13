@@ -231,12 +231,12 @@ notify = [
 [plugins."computer-use@openai-bundled"]
   enabled = true
 
-[plugins."codex-app-tools@openai-bundled"]
-  enabled = true
-
 # ---------------------------------------------------------------------------- #
 #                               Plugins Disabled                               #
 # ---------------------------------------------------------------------------- #
+[plugins."codex-app-tools@openai-bundled"]
+  enabled = false
+
 [plugins."documents@openai-primary-runtime"]
   enabled = false
 
