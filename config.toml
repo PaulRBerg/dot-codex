@@ -285,6 +285,10 @@ notify = [
 
 [[skills.config]]
   enabled = false
+  path = "/Users/prb/.codex/skills/.system/review-agent/SKILL.md"
+
+[[skills.config]]
+  enabled = false
   path = "/Users/prb/.codex/skills/.system/skill-creator/SKILL.md"
 
 [[skills.config]]
@@ -297,7 +301,23 @@ notify = [
 
 [[skills.config]]
   enabled = false
+  name = "openai-templates:artifact-template-annual-impact-report"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-brand-guidelines"
+
+[[skills.config]]
+  enabled = false
   name = "openai-templates:artifact-template-business-review"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-calder-architecture"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-creative-campaign-brief"
 
 [[skills.config]]
   enabled = false
@@ -310,6 +330,10 @@ notify = [
 [[skills.config]]
   enabled = false
   name = "openai-templates:artifact-template-financial-budget"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-growth-strategy"
 
 [[skills.config]]
   enabled = false
@@ -329,11 +353,27 @@ notify = [
 
 [[skills.config]]
   enabled = false
+  name = "openai-templates:artifact-template-next-generation-os"
+
+[[skills.config]]
+  enabled = false
   name = "openai-templates:artifact-template-operating-calendar"
 
 [[skills.config]]
   enabled = false
   name = "openai-templates:artifact-template-operating-review"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-photography-portfolio"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-product-pitch"
+
+[[skills.config]]
+  enabled = false
+  name = "openai-templates:artifact-template-product-strategy"
 
 [[skills.config]]
   enabled = false
@@ -357,6 +397,10 @@ notify = [
 
 [[skills.config]]
   enabled = false
+  name = "openai-templates:artifact-template-state-of-art"
+
+[[skills.config]]
+  enabled = false
   name = "openai-templates:artifact-template-strategy-memorandum"
 
 [[skills.config]]
@@ -373,11 +417,27 @@ notify = [
 
 [[skills.config]]
   enabled = false
+  name = "openai-templates:artifact-template-weekly-business-review"
+
+[[skills.config]]
+  enabled = false
   name = "deep-research-work:deep-research"
 
 [[skills.config]]
   enabled = false
+  name = "pages:write-page"
+
+[[skills.config]]
+  enabled = false
   name = "work-pets:create-pet"
+
+[[skills.config]]
+  enabled = false
+  name = "work-pets:pets"
+
+[[skills.config]]
+  enabled = false
+  name = "work-pets:update-pet"
 
 # ---------------------------------------------------------------------------- #
 #                                      TUI                                     #
