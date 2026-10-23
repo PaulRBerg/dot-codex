@@ -333,7 +333,7 @@ class LintStagedConfigurationTest(unittest.TestCase):
         self._write_tool("bunx", LINT_STAGED_BUNX_STUB)
         self._write_tool("just", LINT_STAGED_JUST_STUB)
 
-    def test_formats_prettier_files_and_checks_toml_after_gitleaks(self) -> None:
+    def test_formats_prettier_and_toml_files_after_gitleaks(self) -> None:
         self._write("docs/note.md", "# Unformatted\n")
         self._write("settings.toml", 'title = "changed"\n')
         self._git("add", "docs/note.md", "settings.toml")
@@ -362,7 +362,7 @@ class LintStagedConfigurationTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         log = self.tool_log.read_text()
         self.assertLess(log.index("just:gitleaks-staged"), log.index("bunx:"))
-        self.assertLess(log.index("bunx:"), log.index("just:toml-format-check"))
+        self.assertLess(log.index("bunx:"), log.index("just:toml-format-write"))
         self.assertIn(str(self.repo / "docs" / "note.md"), log)
         self.assertIn(str(self.repo / "settings.toml"), log)
         self.assertEqual(self._git("show", ":docs/note.md").stdout, "# Formatted\n")

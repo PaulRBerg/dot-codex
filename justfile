@@ -72,8 +72,9 @@ alias gls := gitleaks-staged
 
 # Format TOML files in place.
 [group("checks")]
-@toml-format-write:
-    {{ taplo }} format
+[positional-arguments]
+@toml-format-write *files:
+    {{ taplo }} format {{ files }}
 
 # Check Python files.
 [group("checks")]
