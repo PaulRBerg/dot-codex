@@ -647,3 +647,6 @@ notify = [
 
 [projects."/Users/prb/projects/prberg"]
   trust_level = "trusted"
+
+[projects."/private/tmp/claude-501/-Users-prb-projects-prb-audit/89755d83-ec37-41cf-87b8-5a9be7bdf197/scratchpad/codex-probe/ws"]
+  trust_level = "trusted"
