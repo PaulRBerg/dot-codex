@@ -1,5 +1,27 @@
 {
   "hooks": {
+    "Interrupt": [
+      {
+        "hooks": [
+          {
+            "command": "ai-notify event codex",
+            "timeout": 1,
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "command": "ai-notify event codex",
+            "timeout": 5,
+            "type": "command"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "hooks": [
@@ -21,6 +43,16 @@
           }
         ],
         "matcher": "Bash"
+      },
+      {
+        "hooks": [
+          {
+            "command": "ai-notify event codex",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "^request_user_input$"
       }
     ],
     "SessionEnd": [

@@ -160,6 +160,15 @@ notify = [
 [hooks.state."/Users/prb/.codex/hooks.json:session_start:1:0"]
   trusted_hash = "sha256:4971cc4e5aa05b5841f8b8b93d24fe2d5cc0ab4450a2904cf5d7cd11dbc07602"
 
+[hooks.state."/Users/prb/.codex/hooks.json:permission_request:0:0"]
+  trusted_hash = "sha256:f8422c926e71ed3ff5dc236b0233538e2925e6c285c61f7d9b807e6517c7fb17"
+
+[hooks.state."/Users/prb/.codex/hooks.json:pre_tool_use:1:0"]
+  trusted_hash = "sha256:675f9e1e9e57939e45f1fc2fa70ac0c31d84418bebf7faa8ab38a3591d030847"
+
+[hooks.state."/Users/prb/.codex/hooks.json:interrupt:0:0"]
+  trusted_hash = "sha256:221b672728d8a33d82c4de54ddd86fff6586222b9bb9e8245318cfd20cb85644"
+
 # ---------------------------------------------------------------------------- #
 #                                 Marketplaces                                 #
 # ---------------------------------------------------------------------------- #
@@ -198,7 +207,7 @@ notify = [
 [mcp_servers.node_repl.env]
   BROWSER_USE_AVAILABLE_BACKENDS = ""
   BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-  BROWSER_USE_CODEX_APP_VERSION = "26.1007.30912"
+  BROWSER_USE_CODEX_APP_VERSION = "26.1021.31345"
   BROWSER_USE_TINYSKY_ENABLED = "1"
   CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
   CODEX_HOME = "/Users/prb/.codex"
@@ -252,9 +261,6 @@ notify = [
 
 [plugins."unified-computer-use@openai-bundled"]
   enabled = true
-
-[plugins."code-review@openai-bundled"]
-  enabled = false
 
 
 # ---------------------------------------------------------------------------- #
@@ -649,4 +655,7 @@ notify = [
   trust_level = "trusted"
 
 [projects."/private/tmp/claude-501/-Users-prb-projects-prb-audit/89755d83-ec37-41cf-87b8-5a9be7bdf197/scratchpad/codex-probe/ws"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/home"]
   trust_level = "trusted"
