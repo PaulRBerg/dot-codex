@@ -37,6 +37,8 @@ auth.json
 herdr-agent-state.sh
 history.jsonl
 installation_id
+mention_usage.json
+mention_usage.lock
 models_cache.json
 session_index.jsonl
 transcription-history.jsonl
