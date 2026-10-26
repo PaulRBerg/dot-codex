@@ -659,3 +659,6 @@ notify = [
 
 [projects."/Users/prb/projects/home"]
   trust_level = "trusted"
+
+[projects."/Users/prb/projects/linkdrop"]
+  trust_level = "trusted"
