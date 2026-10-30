@@ -14,7 +14,7 @@ model_reasoning_effort = "xhigh"
 personality = "friendly"
 plan_mode_reasoning_effort = "max"
 sandbox_mode = "danger-full-access"
-service_tier = "fast"
+service_tier = "default"
 suppress_unstable_features_warning = true
 web_search = "live"
 
@@ -662,4 +662,7 @@ notify = [
   trust_level = "trusted"
 
 [projects."/Users/prb/projects/linkdrop"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/manifest"]
   trust_level = "trusted"
