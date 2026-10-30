@@ -455,9 +455,13 @@ notify = [
   show_tooltips = false
   status_line = [
     "model-with-reasoning",
+    "current-dir",
     "git-branch",
     "context-used",
     "used-tokens",
+    "five-hour-limit",
+    "weekly-limit",
+    "task-progress",
   ]
   status_line_use_colors = true
   theme = "gruvbox-dark"
