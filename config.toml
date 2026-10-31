@@ -673,3 +673,6 @@ notify = [
 
 [projects."/Users/prb/projects/emergent"]
   trust_level = "trusted"
+
+[projects."/Users/prb/work/apps/last-n-days"]
+  trust_level = "trusted"
