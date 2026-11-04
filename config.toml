@@ -680,3 +680,6 @@ notify = [
 
 [projects."/Users/prb/work/apps"]
   trust_level = "trusted"
+
+[realtime]
+  voice = "sol"
