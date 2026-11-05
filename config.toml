@@ -52,6 +52,7 @@ notify = [
   followUpQueueMode = "steer"
   keepRemoteControlAwakeWhilePluggedIn = true
   mac-menu-bar-enabled = false
+  migratedFollowUpQueueToSteer = false
   notifications-permissions-enabled = false
   notifications-questions-enabled = false
   notifications-turn-mode = "off"
@@ -205,7 +206,7 @@ notify = [
 [mcp_servers.node_repl.env]
   BROWSER_USE_AVAILABLE_BACKENDS = ""
   BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-  BROWSER_USE_CODEX_APP_VERSION = "26.1023.51421"
+  BROWSER_USE_CODEX_APP_VERSION = "26.1029.61003"
   BROWSER_USE_TINYSKY_ENABLED = "1"
   CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
   CODEX_HOME = "/Users/prb/.codex"
