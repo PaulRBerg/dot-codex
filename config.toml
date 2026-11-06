@@ -447,7 +447,8 @@ notify = [
 #                                      TUI                                     #
 # ---------------------------------------------------------------------------- #
 [tui]
-  fullscreen_transcript = false
+  copy_on_select = "always"
+  fullscreen_transcript = true
   notifications = false
   screen_reader_detection_done = true
   show_tooltips = false
