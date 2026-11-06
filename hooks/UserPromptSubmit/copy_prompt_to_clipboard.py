@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run python
 """Copy submitted Codex prompts to the macOS clipboard for Raycast history.
 
-This UserPromptSubmit hook mirrors each prompt into the system clipboard via
+This UserPromptSubmit hook copies verified user-session prompts to the clipboard via
 ``pbcopy`` so it appears in Raycast's clipboard history. Raw prompts can be
 noisy, so the text is sanitized first: paste/image markers are normalized,
 fenced code blocks are collapsed, and oversized content is bounded.
@@ -30,6 +30,7 @@ MAX_CHARS = 8000
 MAX_LINES = 150
 MIN_PROMPT_CHARS = 120
 SHORT_ID_CHARS = 8
+MAX_SESSION_HEADER_BYTES = 1024 * 1024
 
 CLAUDE_PASTE_MARKER_RE = re.compile(
     r"\[(?:Pasted text|Image|\.\.\.Truncated text) #\d+(?: \+\d+ lines)?\.*\]"
@@ -56,13 +57,6 @@ AGENT_NOTIFICATION_RE = re.compile(
     r"[^\]\n]+\]\s*)?"
     r"<(?:subagent_notification|task-notification)(?=[\s>])",
     re.IGNORECASE,
-)
-SUBAGENT_CONTROL_PROMPT_RE = re.compile(
-    r"^\s*(?:please\s+)?(?:stop|interrupt|pause|cancel|halt)\b"
-    r"(?=.*\b(?:return|report|summarize|give)\b)"
-    r"(?=.*\b(?:current|findings|results|sources)\b)"
-    r"(?=.*\bno edits\b)",
-    re.IGNORECASE | re.DOTALL,
 )
 
 CWD_KEYS = (
@@ -212,6 +206,12 @@ def _metadata_strings(data: dict[str, Any], keys: tuple[str, ...]) -> list[str]:
 
 def _has_non_human_source(data: dict[str, Any]) -> bool:
     """Return whether hook metadata identifies an internal/agent prompt source."""
+    if data.get("agent_id"):
+        return True
+    for key in ("source", "thread_source"):
+        value = data.get(key)
+        if isinstance(value, dict) and "subagent" in value:
+            return True
     for value in _metadata_strings(data, PROMPT_SOURCE_KEYS):
         normalized = _safe_metadata_value(value, 64).lower()
         if normalized in NON_HUMAN_SOURCE_VALUES:
@@ -221,13 +221,45 @@ def _has_non_human_source(data: dict[str, Any]) -> bool:
     return False
 
 
-def _should_skip_prompt_event(prompt: str, data: dict[str, Any]) -> bool:
-    """Return whether this prompt event is internal rather than user-authored."""
+def _is_user_session(data: dict[str, Any]) -> bool:
+    """Verify session provenance before writing to the clipboard.
+
+    Codex 0.167.0 records subagent provenance in the transcript header even when
+    UserPromptSubmit omits it. Read only that bounded header, never the history.
+    Unknown provenance skips the clipboard write without blocking the prompt.
+    """
     if _has_non_human_source(data):
-        return True
+        return False
+
+    transcript = data.get("transcript_path")
+    if transcript:
+        if not isinstance(transcript, str):
+            return False
+        try:
+            path = Path(transcript)
+            if not path.is_file():
+                return False
+            with path.open("rb") as stream:
+                header = stream.readline(MAX_SESSION_HEADER_BYTES + 1)
+            if len(header) > MAX_SESSION_HEADER_BYTES:
+                return False
+            record = json.loads(header)
+        except (OSError, ValueError, UnicodeError):
+            return False
+        if not isinstance(record, dict) or record.get("type") != "session_meta":
+            return False
+        data = record.get("payload")
+        if not isinstance(data, dict) or _has_non_human_source(data):
+            return False
+
+    return data.get("thread_source") == "user" or data.get("source") in ("cli", "vscode")
+
+
+def _should_skip_prompt_event(prompt: str, data: dict[str, Any]) -> bool:
+    """Return whether this event lacks user provenance or is a notification."""
     if AGENT_NOTIFICATION_RE.match(_strip_terminal_controls(prompt)):
         return True
-    return bool(SUBAGENT_CONTROL_PROMPT_RE.match(prompt))
+    return not _is_user_session(data)
 
 
 def _first_string(data: dict[str, Any], keys: tuple[str, ...]) -> str:

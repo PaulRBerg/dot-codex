@@ -190,14 +190,16 @@ class TestMetadataPrefix(unittest.TestCase):
             return_value="[repo:demo thread:0199a213]",
         ):
             self.assertEqual(
-                hook.format_clipboard_prompt(prompt, {}),
+                hook.format_clipboard_prompt(prompt, {"thread_source": "user"}),
                 f"[repo:demo thread:0199a213]\n{prompt}",
             )
 
     def test_format_skips_short_prompt_before_metadata(self) -> None:
         with patch.object(hook, "build_metadata_prefix") as mock_prefix:
             self.assertEqual(
-                hook.format_clipboard_prompt("x" * (hook.MIN_PROMPT_CHARS - 1), {}),
+                hook.format_clipboard_prompt(
+                    "x" * (hook.MIN_PROMPT_CHARS - 1), {"thread_source": "user"}
+                ),
                 "",
             )
             mock_prefix.assert_not_called()
@@ -212,12 +214,12 @@ class TestMetadataPrefix(unittest.TestCase):
         )
 
         with patch.object(hook, "build_metadata_prefix") as mock_prefix:
-            self.assertEqual(hook.format_clipboard_prompt(prompt, {}), "")
+            self.assertEqual(hook.format_clipboard_prompt(prompt, {"thread_source": "user"}), "")
             mock_prefix.assert_not_called()
 
     def test_format_skips_metadata_when_prompt_is_empty(self) -> None:
         with patch.object(hook, "build_metadata_prefix") as mock_prefix:
-            self.assertEqual(hook.format_clipboard_prompt("   \n", {}), "")
+            self.assertEqual(hook.format_clipboard_prompt("   \n", {"thread_source": "user"}), "")
             mock_prefix.assert_not_called()
 
     def test_format_skips_non_human_source_metadata(self) -> None:
@@ -239,7 +241,7 @@ class TestMetadataPrefix(unittest.TestCase):
 
         with patch.object(hook, "build_metadata_prefix", return_value=""):
             self.assertEqual(
-                hook.format_clipboard_prompt(prompt, {"source": "codex"}),
+                hook.format_clipboard_prompt(prompt, {"source": "codex", "thread_source": "user"}),
                 prompt,
             )
 
@@ -251,7 +253,7 @@ class TestMetadataPrefix(unittest.TestCase):
         )
 
         with patch.object(hook, "build_metadata_prefix") as mock_prefix:
-            self.assertEqual(hook.format_clipboard_prompt(prompt, {}), "")
+            self.assertEqual(hook.format_clipboard_prompt(prompt, {"thread_source": "user"}), "")
             mock_prefix.assert_not_called()
 
     def test_format_skips_task_notification_after_provenance(self) -> None:
@@ -270,7 +272,7 @@ class TestMetadataPrefix(unittest.TestCase):
         )
 
         with patch.object(hook, "build_metadata_prefix") as mock_prefix:
-            self.assertEqual(hook.format_clipboard_prompt(prompt, {}), "")
+            self.assertEqual(hook.format_clipboard_prompt(prompt, {"thread_source": "user"}), "")
             mock_prefix.assert_not_called()
 
     def test_format_keeps_user_prompt_that_mentions_task_notification(self) -> None:
@@ -281,9 +283,11 @@ class TestMetadataPrefix(unittest.TestCase):
         )
 
         with patch.object(hook, "build_metadata_prefix", return_value=""):
-            self.assertEqual(hook.format_clipboard_prompt(prompt, {}), prompt)
+            self.assertEqual(
+                hook.format_clipboard_prompt(prompt, {"thread_source": "user"}), prompt
+            )
 
-    def test_format_skips_subagent_control_prompt(self) -> None:
+    def test_format_keeps_user_control_prompt(self) -> None:
         prompt = (
             "Please stop the broad hunt and return your best current "
             "UTXO-style findings now. If no BTC/LTC/DASH/DOGE/BCH/ZEC "
@@ -291,13 +295,110 @@ class TestMetadataPrefix(unittest.TestCase):
             "bar, say that clearly with the best sources checked. No edits."
         )
 
-        with patch.object(hook, "build_metadata_prefix") as mock_prefix:
-            self.assertEqual(hook.format_clipboard_prompt(prompt, {}), "")
-            mock_prefix.assert_not_called()
+        with patch.object(hook, "build_metadata_prefix", return_value=""):
+            self.assertEqual(
+                hook.format_clipboard_prompt(prompt, {"thread_source": "user"}), prompt
+            )
+
+
+class TestSessionProvenance(unittest.TestCase):
+    def test_transcript_provenance(self) -> None:
+        cases = [
+            ({"source": "vscode", "thread_source": "user"}, True),
+            ({"source": "cli"}, True),
+            ({"thread_source": "subagent"}, False),
+            ({"source": {"subagent": {"thread_spawn": {"parent_thread_id": "parent"}}}}, False),
+            ({"source": {"subagent": "review"}}, False),
+            ({"source": "unknown"}, False),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            transcript = Path(directory) / "rollout.jsonl"
+            for metadata, expected in cases:
+                with self.subTest(metadata=metadata):
+                    transcript.write_text(
+                        json.dumps({"type": "session_meta", "payload": metadata})
+                        + '\n{"type":"response_item"}\n'
+                    )
+                    # The parent session id and apparent user role cannot identify a child.
+                    data = {
+                        "transcript_path": str(transcript),
+                        "session_id": "parent",
+                        "role": "user",
+                    }
+                    self.assertEqual(hook._is_user_session(data), expected)
+
+    def test_unverified_provenance_skips_copy(self) -> None:
+        for data in ({}, {"source": "codex"}, {"transcript_path": 42}):
+            with self.subTest(data=data):
+                self.assertFalse(hook._is_user_session(data))
+        with tempfile.TemporaryDirectory() as directory:
+            transcript = Path(directory) / "rollout.jsonl"
+            data = {"transcript_path": str(transcript)}
+            self.assertFalse(hook._is_user_session(data))
+            for raw in (
+                "",
+                "{",
+                "null",
+                "[]",
+                '{"type":"event_msg"}',
+                '{"type":"session_meta","payload":null}',
+                " " * (hook.MAX_SESSION_HEADER_BYTES + 1),
+            ):
+                with self.subTest(raw_length=len(raw)):
+                    transcript.write_text(raw)
+                    self.assertFalse(hook._is_user_session(data))
+            transcript.write_bytes(b"\xff\n")
+            self.assertFalse(hook._is_user_session(data))
+
+    def test_explicit_subagent_metadata_overrides_user_source(self) -> None:
+        for metadata in ({"agent_id": "child"}, {"source": {"subagent": "review"}}):
+            with self.subTest(metadata=metadata):
+                self.assertFalse(hook._is_user_session({"thread_source": "user", **metadata}))
+
+    def test_subagent_transcript_never_reaches_pbcopy_or_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            transcript = Path(directory) / "rollout.jsonl"
+            transcript.write_text(
+                json.dumps(
+                    {
+                        "type": "session_meta",
+                        "payload": {
+                            "source": {
+                                "subagent": {"thread_spawn": {"parent_thread_id": "parent"}}
+                            },
+                            "thread_source": "subagent",
+                        },
+                    }
+                )
+            )
+            data = {
+                "prompt": _long_prompt(),
+                "transcript_path": str(transcript),
+                "session_id": "parent",
+            }
+            with (
+                patch.object(hook.sys, "stdin", StringIO(json.dumps(data))),
+                patch.object(
+                    hook, "format_clipboard_prompt", side_effect=RuntimeError("boom")
+                ) as formatter,
+                patch.object(hook.subprocess, "run") as pbcopy,
+                self.assertRaises(SystemExit) as result,
+            ):
+                hook.main()
+            self.assertEqual(result.exception.code, 0)
+            formatter.assert_not_called()
+            pbcopy.assert_not_called()
 
 
 class TestMain(unittest.TestCase):
     def _run_main(self, raw: str) -> Any:
+        try:
+            data = json.loads(raw)
+            if isinstance(data, dict):
+                data.setdefault("thread_source", "user")
+                raw = json.dumps(data)
+        except json.JSONDecodeError:
+            pass
         with (
             patch.object(
                 hook,
@@ -378,7 +479,7 @@ class TestMain(unittest.TestCase):
         mock_run.assert_not_called()
 
     @patch.object(hook.subprocess, "run")
-    def test_skips_pbcopy_for_subagent_control_prompt(self, mock_run: MagicMock) -> None:
+    def test_copies_user_control_prompt(self, mock_run: MagicMock) -> None:
         prompt = (
             "Please stop the broad hunt and return your best current "
             "UTXO-style findings now. If no BTC/LTC/DASH/DOGE/BCH/ZEC "
@@ -386,8 +487,10 @@ class TestMain(unittest.TestCase):
             "bar, say that clearly with the best sources checked. No edits."
         )
 
+        mock_run.return_value = MagicMock(returncode=0, stderr="")
         self.assertEqual(self._run_main(json.dumps({"prompt": prompt})), 0)
-        mock_run.assert_not_called()
+        mock_run.assert_called_once()
+        self.assertIn(prompt, mock_run.call_args.kwargs["input"])
 
     @patch.object(hook.subprocess, "run")
     def test_skips_pbcopy_for_task_notification(self, mock_run: MagicMock) -> None:
@@ -426,7 +529,7 @@ class TestMain(unittest.TestCase):
             patch.object(
                 hook.sys,
                 "stdin",
-                StringIO(json.dumps({"prompt": prompt})),
+                StringIO(json.dumps({"prompt": prompt, "thread_source": "user"})),
             ),
             redirect_stderr(stderr),
             self.assertRaises(SystemExit) as exc_info,

@@ -65,7 +65,7 @@ recreate it.
 
 Active hooks:
 
-- `hooks/UserPromptSubmit/copy_prompt_to_clipboard.py`: copies each submitted prompt to the macOS clipboard via
+- `hooks/UserPromptSubmit/copy_prompt_to_clipboard.py`: copies verified user-session prompts to the macOS clipboard via
   `/usr/bin/pbcopy` so Raycast clipboard history keeps a searchable prompt log.
 - `ai-coord hook codex`: tracks Codex lifecycle, presence, work ownership, messages, and repository findings in the
   shared [`ai-coord`](https://github.com/PaulRBerg/agent-skills/tree/main/toolkit/coord) ledger used by Claude Code.
@@ -77,6 +77,11 @@ Active hooks:
 - `ai-notify event codex`: records task context on `UserPromptSubmit` and sends desktop completion notifications on
   `Stop`. Codex disables native hooks for internal title generation. The Desktop-owned `notify` wrapper no longer
   forwards to ai-notify, preventing duplicate completion alerts.
+
+The clipboard hook excludes subagent sessions using hook metadata and the first `session_meta` transcript record. If
+provenance is missing, unreadable, or unknown, it skips copying without blocking prompt submission. The transcript
+format is an implementation detail verified with Codex CLI 0.167.0, so recheck this filter after format changes.
+Internal notification envelopes are also excluded. Prompt wording alone does not identify a subagent.
 
 The clipboard hook sanitizes noisy prompt content before copying:
 
