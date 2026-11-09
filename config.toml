@@ -205,7 +205,7 @@ notify = [
 [mcp_servers.node_repl.env]
   BROWSER_USE_AVAILABLE_BACKENDS = ""
   BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-  BROWSER_USE_CODEX_APP_VERSION = "26.1103.41825"
+  BROWSER_USE_CODEX_APP_VERSION = "26.1103.60933"
   BROWSER_USE_TINYSKY_ENABLED = "1"
   CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
   CODEX_HOME = "/Users/prb/.codex"
@@ -683,6 +683,9 @@ notify = [
   trust_level = "trusted"
 
 [projects."/private/tmp/claude-501/-Users-prb-projects-agent-cards/1769afa4-14dc-4076-8a91-28b013a0ebd2/scratchpad/imagegen"]
+  trust_level = "trusted"
+
+[projects."/Users/prb/projects/awesome-many-worlds"]
   trust_level = "trusted"
 
 [realtime]
