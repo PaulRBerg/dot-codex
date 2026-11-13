@@ -78,7 +78,6 @@ notify = [
   image_generation = true
   in_app_browser = false
   mentions_v2 = false
-  multi_agent = true
   plugin_sharing = false
   plugins = true
   remote_plugin = false
@@ -97,12 +96,17 @@ notify = [
   tool_namespace = "agents"
   wait_agent_enabled = true
 
-  # ---------------------------------------------------------------------------- #
-  #                                    History                                   #
-  # ---------------------------------------------------------------------------- #
-
+# ---------------------------------------------------------------------------- #
+#                                    History                                   #
+# ---------------------------------------------------------------------------- #
 [history]
   persistence = "save-all"
+
+# ---------------------------------------------------------------------------- #
+#                                   Realtime                                   #
+# ---------------------------------------------------------------------------- #
+[realtime]
+  voice = "sol"
 
 # ---------------------------------------------------------------------------- #
 #                                     Hooks                                    #
@@ -658,9 +662,6 @@ notify = [
 [projects."/Users/prb/projects/prberg"]
   trust_level = "trusted"
 
-[projects."/private/tmp/claude-501/-Users-prb-projects-prb-audit/89755d83-ec37-41cf-87b8-5a9be7bdf197/scratchpad/codex-probe/ws"]
-  trust_level = "trusted"
-
 [projects."/Users/prb/projects/home"]
   trust_level = "trusted"
 
@@ -682,11 +683,5 @@ notify = [
 [projects."/Users/prb/work/apps"]
   trust_level = "trusted"
 
-[projects."/private/tmp/claude-501/-Users-prb-projects-agent-cards/1769afa4-14dc-4076-8a91-28b013a0ebd2/scratchpad/imagegen"]
-  trust_level = "trusted"
-
 [projects."/Users/prb/projects/awesome-many-worlds"]
   trust_level = "trusted"
-
-[realtime]
-  voice = "sol"
