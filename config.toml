@@ -185,6 +185,10 @@ notify = [
   source = "/Users/prb/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
   source_type = "local"
 
+[marketplaces.pantheon-hosted]
+  source = "https://github.com/mrdavey/pantheon-connectors.git"
+  source_type = "git"
+
 # ---------------------------------------------------------------------------- #
 #                                      MCP                                     #
 # ---------------------------------------------------------------------------- #
@@ -263,6 +267,9 @@ notify = [
   enabled = false
 
 [plugins."unified-computer-use@openai-bundled"]
+  enabled = true
+
+[plugins."pantheon@pantheon-hosted"]
   enabled = true
 
 
