@@ -693,3 +693,87 @@ notify = [
 
 [projects."/Users/prb/projects/awesome-many-worlds"]
   trust_level = "trusted"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"]
+  default_tools_approval_mode = "prompt"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_connect"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_preview"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_doctor"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_receive"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_ack"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_post"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_command"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_chat"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_message"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_history"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_receipts"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_members"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_context"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_chat_state"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_begin_wake"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_finish_wake"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_checkpoint"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_report"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_opening"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_question"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_setup"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_transfer_send"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_transfer_fetch"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_transfer_ack"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_transfer_inspect"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_site_deploy"]
+  approval_mode = "approve"
+
+["plugins"."pantheon@pantheon-hosted"."mcp_servers"."pantheon"."tools"."pantheon_site_status"]
+  approval_mode = "approve"

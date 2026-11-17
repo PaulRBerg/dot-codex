@@ -14,6 +14,7 @@ thread-writer-locks/
 node_modules/
 node_repl/
 packages/
+pantheon/
 plugins/
 rollout-migrations/
 sessions/
@@ -40,6 +41,7 @@ installation_id
 mention_usage.json
 mention_usage.lock
 models_cache.json
+pantheon-tool-policy.lock
 session_index.jsonl
 transcription-history.jsonl
 version.json
