@@ -695,3 +695,7 @@ notify = [
 
 [projects."/Users/prb/work/speculation"]
   trust_level = "trusted"
+
+[mcp_servers.prb-life]
+  command = "/Applications/PRB Life.app/Contents/MacOS/prb-life-mcp"
+  required = false
