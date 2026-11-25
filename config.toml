@@ -480,6 +480,18 @@ notify = [
 [tui.model_availability_nux]
   "gpt-5.6-sol" = 4
 
+[tui.presets.1]
+  input = "/model gpt-6.2-astra --reasoning=xhigh --speed=standar"
+  label = ""
+
+[tui.presets.2]
+  input = "/model gpt-6.2-sol --reasoning=xhigh --speed=standard"
+  label = ""
+
+[tui.presets.3]
+  input = "/model gpt-6.1-terra --reasoning=xhigh --speed=standard"
+  label = ""
+
 # ---------------------------------------------------------------------------- #
 #                                   Projects                                   #
 # ---------------------------------------------------------------------------- #
